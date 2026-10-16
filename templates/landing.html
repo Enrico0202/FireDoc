@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FireDoc</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+:root{--bg:#0b0f17;--surface:#111827;--border:#1e293b;--text:#e2e8f0;
+--muted:#94a3b8;--dim:#64748b;--accent:#D97706;--accent2:#F2A65A;--amber:#FBBF24;
+--green:#34D399;--red:#F87171;
+--gradient:linear-gradient(135deg,#D97706,#B45309);
+--sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
+--mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,'Liberation Mono',Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;
+display:grid;grid-template-rows:auto 1fr auto;position:relative;overflow-x:hidden}
+
+/* ---- breathing hero glow ---- */
+body::before{content:"";position:absolute;left:50%;top:-220px;width:900px;height:520px;
+transform:translateX(-50%);pointer-events:none;
+background:radial-gradient(ellipse at center,rgba(217,119,6,.16) 0%,rgba(217,119,6,0) 70%);
+filter:blur(40px);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateX(-50%) scale(1);opacity:.75}
+50%{transform:translateX(-50%) scale(1.12);opacity:1}}
+
+/* ---- nav ---- */
+.brand-bar{position:relative;padding:0 48px;height:64px;display:flex;align-items:center;
+justify-content:space-between;background:linear-gradient(180deg,#131B2C,#0D1420);
+border-bottom:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.brand-bar::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+background:linear-gradient(90deg,transparent,rgba(217,119,6,.7) 25%,rgba(217,119,6,.7) 75%,transparent)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:#141B2A;
+border:1px solid rgba(217,119,6,.35);display:flex;align-items:center;justify-content:center}
+.brand-mark svg{width:16px;height:16px;fill:var(--accent2)}
+.brand-word{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.admin-pill{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
+color:var(--accent2);text-decoration:none;padding:7px 16px;
+border:1px solid rgba(217,119,6,.35);border-radius:999px;
+background:rgba(217,119,6,.07);transition:all .2s}
+.admin-pill:hover{background:rgba(217,119,6,.15)}
+.admin-pill svg{width:12px;height:12px;fill:var(--accent2)}
+
+/* ---- hero ---- */
+.hero{text-align:center;padding:56px 24px 0}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;
+border:1px solid rgba(217,119,6,.2);border-radius:999px;background:rgba(217,119,6,.05);
+font-size:11px;font-weight:700;letter-spacing:2px;color:var(--accent2)}
+.hero-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.hero h1{font-size:44px;font-weight:800;line-height:1.2;letter-spacing:-1px;margin-top:22px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:15px;color:var(--muted);line-height:1.6;max-width:700px;margin:14px auto 0}
+
+/* ---- tool cards ---- */
+.grid{display:grid;grid-template-columns:repeat(2,540px);gap:40px;justify-content:center;
+padding:64px 24px 0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+padding:32px;display:flex;flex-direction:column;text-decoration:none;color:inherit;
+transition:all .2s}
+.card:hover{transform:translateY(-4px);border-color:rgba(217,119,6,.4);
+box-shadow:0 8px 32px rgba(217,119,6,.12)}
+.card-head{display:flex;align-items:center;gap:16px}
+.card-icon{width:48px;height:48px;border-radius:12px;background:rgba(217,119,6,.08);
+display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-icon svg{width:20px;height:20px;fill:var(--accent2)}
+.card-title{font-size:19px;font-weight:700}
+.card-route{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim)}
+.card-desc{margin-top:16px;font-size:13px;color:var(--muted);line-height:1.65}
+.card-desc b{color:var(--text);font-weight:600}
+.card-desc .g{color:var(--green)}.card-desc .r{color:var(--red)}.card-desc .a{color:var(--amber)}
+.card-foot{padding-top:18px;margin-top:24px;border-top:1px solid var(--border);
+display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent2)}
+.card-foot svg{width:14px;height:14px;fill:var(--accent2);transition:transform .2s}
+.card:hover .card-foot svg{transform:translateX(4px)}
+
+/* ---- trust row ---- */
+.trust{display:flex;justify-content:center;gap:40px;padding:48px 24px 0}
+.trust-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
+.trust-item svg{width:14px;height:14px;fill:var(--dim)}
+
+/* ---- footer ---- */
+.footer-bar{display:flex;align-items:center;justify-content:center;gap:16px;
+padding:12px 24px;margin-top:48px;font-size:11px;
+color:var(--dim);background:#0D1420;border-top:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.footer-links{display:flex;align-items:center;gap:16px}
+.footer-links a{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--accent2)}
+.footer-links svg{width:11px;height:11px;fill:currentColor}
+
+@media(max-width:1180px){.grid{grid-template-columns:minmax(0,540px)}}
+@media(max-width:640px){.brand-bar{padding:0 20px}.hero h1{font-size:30px}
+.trust{flex-direction:column;align-items:center;gap:12px}}
+</style>
+</head>
+<body>
+
+<header class="brand-bar">
+  <a class="brand" href="/">
+    <span class="brand-mark">
+      <svg viewBox="0 0 384 512"><path d="M153.6 29.9l16-21.3C173.6 3.2 180 0 186.7 0C198.4 0 208 9.6 208 21.3V43.5c0 13.1 5.4 25.7 14.9 34.7L307.6 159C356.4 205.6 384 270.2 384 337.7C384 434 306 512 209.7 512H192C86 512 0 426 0 320v-3.8c0-48.8 19.4-95.6 53.9-130.1l3.5-3.5c4.2-4.2 10-6.6 16-6.6C85.9 176 96 186.1 96 198.6V288c0 35.3 28.7 64 64 64s64-28.7 64-64v-3.9c0-18-7.2-35.3-19.9-48l-38.6-38.6c-24-24-37.5-56.7-37.5-90.7c0-27.7 9-54.8 25.6-76.9z"/></svg>
+    </span>
+    <span class="brand-word">FireDoc</span>
+  </a>
+  <a href="/admin" class="admin-pill">
+    <svg viewBox="0 0 512 512"><path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z"/></svg>
+    Admin
+  </a>
+</header>
+
+<main>
+  <section class="hero">
+    <span class="hero-badge">INTERNAL FORTINET TOOLS</span>
+    <h1>Audit and compare FortiGate<br>configs <em>in seconds</em></h1>
+    <p>Upload a FortiGate configuration export and get an interactive, self-contained HTML report — nothing is stored on the server.</p>
+  </section>
+
+  <div class="grid">
+    <a href="/report" class="card">
+      <div class="card-head">
+        <span class="card-icon">
+          <svg viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM112 256H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></svg>
+        </span>
+        <span class="card-title">Report Generator</span>
+        <span class="card-route">/report</span>
+      </div>
+      <p class="card-desc">Upload a FortiGate <b>.conf</b> or <b>.yaml</b> export and get an interactive audit report with findings, CIS references and remediation hints.</p>
+      <div class="card-foot">Open tool
+        <svg viewBox="0 0 448 512"><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></svg>
+      </div>
+    </a>
+
+    <a href="/diff" class="card">
+      <div class="card-head">
+        <span class="card-icon">
+          <svg viewBox="0 0 512 512"><path d="M150.6 150.6c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3l96 96c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 301.3 448 301.3c17.7 0 32-14.3 32-32s-14.3-32-32-32L109.3 237.3l41.4-41.4c12.5-12.5 12.5-32.8 0-45.3zm210.8 210.8c12.5 12.5 32.8 12.5 45.3 0l96-96c12.5-12.5 12.5-32.8 0-45.3l-96-96c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l41.4 41.4L64 210.7c-17.7 0-32 14.3-32 32s14.3 32 32 32l338.8 0-41.4 41.4c-12.5 12.5-12.5 32.8 0 45.3z"/></svg>
+        </span>
+        <span class="card-title">Config Diff</span>
+        <span class="card-route">/diff</span>
+      </div>
+      <p class="card-desc">Compare two configs — before and after a firmware upgrade or change — with git-style <span class="g">added</span>, <span class="r">removed</span> and <span class="a">changed</span> highlighting.</p>
+      <div class="card-foot">Open tool
+        <svg viewBox="0 0 448 512"><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></svg>
+      </div>
+    </a>
+  </div>
+
+  <div class="trust">
+    <span class="trust-item">
+      <svg viewBox="0 0 448 512"><path d="M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z"/></svg>
+      In-memory, nothing stored
+    </span>
+    <span class="trust-item">
+      <svg viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM216 232V334.1l31-31c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-72 72c-9.4 9.4-24.6 9.4-33.9 0l-72-72c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l31 31V232c0-13.3 10.7-24 24-24s24 10.7 24 24z"/></svg>
+      Offline HTML reports
+    </span>
+    <span class="trust-item">
+      <svg viewBox="0 0 512 512"><path d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z"/></svg>
+      CIS benchmark findings
+    </span>
+  </div>
+</main>
+
+<footer class="footer-bar">© 2026 FortiDoc — All Rights Reserved
+  <span class="footer-links">
+    <a href="/docs">
+      <svg viewBox="0 0 448 512"><path d="M448 96c0-35.3-28.7-64-64-64H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96zM128 320c-17.7 0-32-14.3-32-32s14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128zM96 160c0-17.7 14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128c-17.7 0-32-14.3-32-32zM128 256c-17.7 0-32-14.3-32-32s14.3-32 32-32H256c17.7 0 32 14.3 32 32s-14.3 32-32 32H128z"/></svg>
+      API Docs
+    </a>
+  </span>
+</footer>
+
+</body>
+</html>

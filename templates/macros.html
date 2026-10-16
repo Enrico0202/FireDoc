@@ -1,0 +1,178 @@
+{# templates/macros.html — Reusable UI components #}
+
+{# Badge with automatic styling by kind #}
+{% macro badge(text, kind='default') -%}
+<span class="badge badge-{{ kind }}">{{ text }}</span>
+{%- endmacro %}
+
+{# Collapsible section wrapper #}
+{% macro section_card(id, icon, title, count=none, collapsed=false) -%}
+<div class="doc-section" id="{{ id }}" data-collapsed="{{ collapsed|lower }}">
+  <div class="section-header" onclick="toggleSection(this)">
+    <span class="section-icon">{{ icon }}</span>
+    <span class="section-title" onclick="event.stopPropagation()">{{ title }}</span>
+    {% if count is not none -%}
+    <span class="section-count">{{ count }}</span>
+    {% endif -%}
+    <span class="section-caret">{{ '▶' if collapsed else '▼' }}</span>
+  </div>
+  <div class="section-body">
+    {{ caller() }}
+  </div>
+</div>
+{%- endmacro %}
+
+{# Sidebar navigation group #}
+{% macro nav_group(icon, title, nav_items) -%}
+<li class="nav-group">
+  <span class="nav-group-label">{{ icon }} {{ title }}</span>
+  <ul class="nav-sublist">
+    {% for ni in nav_items -%}
+    <li class="nav-item">
+      <a class="nav-link" href="#{{ ni.id }}">
+        {{ ni.title }}
+        {% if ni.count is not none -%}
+        <span class="nav-count">{{ ni.count }}</span>
+        {% endif -%}
+      </a>
+    </li>
+    {% endfor -%}
+  </ul>
+</li>
+{%- endmacro %}
+
+{# Standard data table #}
+{% macro data_table(headers, rows, empty_msg='No entries') -%}
+{% if rows -%}
+<div class="table-wrap">
+<table class="data-table">
+  <thead><tr>
+    {% for h in headers -%}<th>{{ h }}</th>{% endfor -%}
+  </tr></thead>
+  <tbody>
+    {% for row in rows -%}
+    <tr>
+      {% for cell in row -%}<td>{{ cell }}</td>{% endfor -%}
+    </tr>
+    {% endfor -%}
+  </tbody>
+</table>
+</div>
+{% else -%}
+<div class="empty-state">{{ empty_msg }}</div>
+{% endif -%}
+{%- endmacro %}
+
+{# Stat card for executive summary #}
+{% macro stat_card(icon, label, value) -%}
+<div class="stat-card">
+  <span class="stat-icon">{{ icon }}</span>
+  <span class="stat-label">{{ label }}</span>
+  <span class="stat-value">{{ value }}</span>
+</div>
+{%- endmacro %}
+
+{# Key-value info card #}
+{% macro info_card(title, fields) -%}
+<div class="poldata-col">
+  {% if title -%}
+  <div class="poldata-label">{{ title }}</div>
+  {% endif -%}
+  {% for k, v in fields -%}
+  <div style="display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+    <span style="color:var(--dim)">{{ k }}</span>
+    <span style="font-weight:500;text-align:right">{{ v }}</span>
+  </div>
+  {% endfor -%}
+</div>
+{%- endmacro %}
+
+{# Two-column grid wrapper #}
+{% macro two_col(left, right) -%}
+<div class="two-col">
+  <div>{{ left }}</div>
+  <div>{{ right }}</div>
+</div>
+{%- endmacro %}
+
+{# Policy card (collapsible) #}
+{% macro policy_card(policy) -%}
+<div class="policy-card" id="pol-{{ policy.seq }}">
+  <div class="policy-header" onclick="togglePolicy(this)">
+    <span class="policy-seq">#{{ policy.seq }}</span>
+    <span class="policy-name">{{ policy.name }}</span>
+    <span class="policy-badges">{{ policy.badges|safe }}</span>
+    <span class="policy-caret">▶</span>
+  </div>
+  <div class="policy-body" style="display:none">
+    {{ policy.body|safe }}
+  </div>
+</div>
+{%- endmacro %}
+
+{# VPN tunnel card (collapsible) #}
+{% macro vpn_card(vpn) -%}
+<div class="vpn-card vpn-collapsible collapsed">
+  <div class="vpn-card-header" onclick="toggleVpn(this)">
+    <span class="vpn-tunnel-name" onclick="event.stopPropagation()">🔒 {{ vpn.name }}</span>
+    <span class="vpn-caret">▶</span>
+  </div>
+  <div class="vpn-body">
+    <div class="vpn-card-meta">
+      {% for item in vpn.meta -%}
+      <div class="vpn-meta-item">
+        <span class="vpn-meta-label">{{ item.label }}</span>
+        <span class="vpn-meta-value">{{ item.value }}</span>
+      </div>
+      {% endfor -%}
+    </div>
+    {% if vpn.phase2 -%}
+    <div class="vpn-phase2-wrap">
+      <div class="vpn-phase2-title">Phase 2 — Quick Mode Selectors</div>
+      {{ data_table(vpn.phase2_headers, vpn.phase2) }}
+    </div>
+    {% endif -%}
+  </div>
+</div>
+{%- endmacro %}
+
+{# Finding group (collapsible) #}
+{% macro finding_group(severity, icon, findings) -%}
+{% if findings -%}
+<div class="finding-group" data-severity="{{ severity }}">
+  <div class="finding-group-header" onclick="toggleFindings(this)">
+    <span>{{ icon }} {{ severity|capitalize }} ({{ findings|length }})</span>
+    <span class="finding-group-caret">▼</span>
+  </div>
+  <div class="finding-group-body">
+    {% for f in findings -%}
+    <div class="finding finding-{{ severity }}">
+      <div class="finding-title">
+        {{ badge(severity|upper, severity) }}
+        <a class="finding-link" href="#{{ f.target_id }}" onclick="scrollToTarget('{{ f.target_id }}')">{{ f.title }}</a>
+        {% if f.cis_ref -%}
+        <span class="finding-cis">CIS {{ f.cis_ref }}</span>
+        {% endif -%}
+      </div>
+      {% if f.detail -%}
+      <div class="finding-detail">{{ f.detail }}</div>
+      {% endif -%}
+      {% if f.remediation -%}
+      <div class="finding-remediation">💡 {{ f.remediation }}</div>
+      {% endif -%}
+    </div>
+    {% endfor -%}
+  </div>
+</div>
+{% endif -%}
+{%- endmacro %}
+
+{# Sub-heading label #}
+{% macro sub_heading(text) -%}
+<div class="sub-heading">{{ text }}</div>
+{%- endmacro %}
+
+{# Object link helper (clickable, with anchor) #}
+{% macro obj_link(name, prefix) -%}
+<a href="#{{ prefix }}-{{ name|replace(' ', '_')|replace('/', '_') }}" class="obj-link" data-obj-name="{{ name }}">{{ name }}</a>
+{%- endmacro %}

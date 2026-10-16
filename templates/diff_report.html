@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FortiDoc Diff — {{ hostname_a }} → {{ hostname_b }}</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,{{ favicon_b64 }}">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+{{ base_css }}
+</style>
+<style>
+{{ diff_css }}
+</style>
+</head>
+<body>
+{% set total = summary.added + summary.changed + summary.removed %}
+{% set changed_secs = sections|selectattr('count','gt',0)|list|length %}
+{% set grand = total + summary.unchanged_sections %}
+{% set pct_add = (summary.added/grand*100) if grand else 0 %}
+{% set pct_chg = (summary.changed/grand*100) if grand else 0 %}
+{% set pct_del = (summary.removed/grand*100) if grand else 0 %}
+{% set pct_same = (summary.unchanged_sections/grand*100) if grand else 0 %}
+
+{% macro subhead_block(title, body) -%}
+<div class="section-sub" data-collapsed="true">
+  <div class="subhead" role="button" tabindex="0" aria-expanded="false" onclick="toggleSub(this)"
+       onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSub(this)}">
+    <span class="subhead-title">{{ title }}</span>
+    <span class="subhead-state">COLLAPSED</span>
+    <span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>
+  </div>
+  <div class="subhead-body">{{ body|safe }}</div>
+</div>
+{%- endmacro %}
+
+{% macro pol_card(p, sign, cls) -%}
+<div class="diff-pol-card {{ cls }}">
+  <div class="diff-pol-header">
+    <span style="font-family:var(--mono);font-weight:700;flex-shrink:0">{{ sign }}</span>
+    <span style="font-family:var(--mono);font-size:10.5px;flex-shrink:0">#{{ p.seq }}</span>
+    <span class="diff-pol-name">{{ p.name or '—' }}</span>
+    <span class="diff-pol-meta">{{ p.action or '' }} {{ 'ENABLED' if p.status=='enabled' else 'DISABLED' if p.status=='disabled' else '' }}</span>
+    {% if p.logtraffic and p.logtraffic != 'disable' %}
+    <span class="diff-pol-log">LOG</span>
+    {% endif %}
+    <span class="pol-card-caret">▶</span>
+  </div>
+  <div class="diff-pol-body">
+    <div class="poldata-grid">
+      <div class="poldata-col"><div class="poldata-label">Incoming Interface</div>
+        <div class="poldata-val">{{ p.srcintf or '—' }}</div></div>
+      <div class="poldata-col"><div class="poldata-label">Source</div>
+        <div class="poldata-val">{{ p.srcaddr or '—' }}</div></div>
+      <div class="poldata-col"><div class="poldata-label">Outgoing Interface</div>
+        <div class="poldata-val">{{ p.dstintf or '—' }}</div></div>
+      <div class="poldata-col"><div class="poldata-label">Destination</div>
+        <div class="poldata-val">{{ p.dstaddr or '—' }}</div></div>
+    </div>
+    <div class="pol-svc">
+      <span class="lbl">Services</span>
+      {% if p.services %}{% for s in p.services %}<span class="s">{{ s }}</span>{% endfor %}
+      {% else %}<em>ALL</em>{% endif %}
+    </div>
+    <div class="poldata-grid">
+      <div class="poldata-col"><div class="poldata-label">Schedule</div>
+        <div class="poldata-val">{{ p.schedule or 'always' }}</div></div>
+      <div class="poldata-col"><div class="poldata-label">Security Profiles</div>
+        <div class="poldata-val">
+          {% set profs = [] %}
+          {% if p.av %}{% set _ = profs.append('AV:' + p.av) %}{% endif %}
+          {% if p.ips %}{% set _ = profs.append('IPS:' + p.ips) %}{% endif %}
+          {% if p.webfilter %}{% set _ = profs.append('Web:' + p.webfilter) %}{% endif %}
+          {% if p.appctrl %}{% set _ = profs.append('App:' + p.appctrl) %}{% endif %}
+          {% if p.dlp %}{% set _ = profs.append('DLP:' + p.dlp) %}{% endif %}
+          {% if p.dnsfilter %}{% set _ = profs.append('DNS:' + p.dnsfilter) %}{% endif %}
+          {% if p.sslssh %}{% set _ = profs.append('SSL:' + p.sslssh) %}{% endif %}
+          {% if p.profile_group %}{% set _ = profs.append('Grp:' + p.profile_group) %}{% endif %}
+          <div class="pol-profs">
+            {% for pr in profs %}<span class="pr">{{ pr }}</span>{% endfor %}
+            {% if not profs %}<span style="color:var(--dim);font-size:10.5px">None</span>{% endif %}
+          </div>
+        </div></div>
+    </div>
+    {% if p.nat %}
+    <div class="pol-svc" style="padding-top:4px"><span class="lbl">NAT</span>
+      <span class="s" style="color:var(--green);background:#34D39914;border-color:#34D39944">ENABLED{% if p.natpool %} → {{ p.natpool }}{% endif %}</span></div>
+    {% endif %}
+    {% if p.comments %}
+    <div class="pol-comment">{{ p.comments }}</div>
+    {% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro changed_pol_card(ch) -%}
+{% set av = ch.view -%}
+<div class="diff-pol-card">
+  <div class="diff-pol-header">
+    <span style="font-family:var(--mono);font-weight:700;color:var(--amber);flex-shrink:0">~</span>
+    <span style="font-family:var(--mono);font-size:10.5px;flex-shrink:0">#{{ ch.after.get('seq', ch.before.get('seq', ch.key)) }}</span>
+    <span class="diff-pol-name">{{ ch.after.get('name') or ch.key }}</span>
+    <span class="diff-pol-meta">{{ ch.after.get('action', '') }} {{ ch.after.get('status', '') }}</span>
+    <span class="pol-card-caret">▶</span>
+  </div>
+  <div class="diff-pol-body">
+    <div class="pol-summary">{{ av.n_changes }} change{{ '' if av.n_changes == 1 else 's' }}: {{ av.summary }}</div>
+    {% if av.renamed %}
+    <div class="pol-rename">
+      <span class="rn-ico">↻ RENAMED</span>
+      <span class="pol-before">{{ av.renamed.before }}</span>
+      <span class="pol-arrow">→</span>
+      <span class="pol-after">{{ av.renamed.after }}</span>
+    </div>
+    {% endif %}
+    <div class="pol-changed-body">
+      {% for g in av.groups %}
+      <div class="pol-group">
+        <div class="pol-group-title">{{ g.title }}</div>
+        {% for r in g.rows %}
+        <div class="pol-field-row">
+          <span class="pol-field-key">{{ r.label }}</span>
+          <span class="pol-field-val">
+            {% if r.is_list %}
+            {% for x in r.b_removed %}<span class="pol-chip rem">{{ x }}</span>{% endfor %}
+            {% for x in r.a_added %}<span class="pol-chip add">{{ x }}</span>{% endfor %}
+            {% if not r.b_removed and not r.a_added %}<span class="pol-unchanged">reordered</span>{% endif %}
+            {% if r.n_keep %}<span class="pol-chip keep">+{{ r.n_keep }} unchanged</span>{% endif %}
+            {% else %}
+            {% if r.before %}<span class="pol-before">{{ r.before }}</span><span class="pol-arrow">→</span>{% endif %}
+            <span class="pol-after">{{ r.after or '—' }}</span>
+            {% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro tbl(head, rows) -%}
+<div class="table-wrap diff-table-wrap"><table class="data-table diff-table">
+<thead><tr>{{ head }}</tr></thead>
+<tbody>{{ rows|join('') }}</tbody>
+</table></div>
+{%- endmacro %}
+
+{% macro pol_row_added(p) -%}
+<tr class="row-added"><td class="A">+</td><td>{{ p.seq }}</td>
+  <td><strong>{{ p.name or '—' }}</strong></td>
+  <td class="det">{{ p.srcintf or '—' }} → {{ p.dstintf or '—' }} &nbsp;·&nbsp; {{ p.action or '—' }} &nbsp;·&nbsp; {{ p.srcaddr or '—' }} → {{ p.dstaddr or '—' }} &nbsp;·&nbsp; {% if p.services %}{{ p.services|join(', ') }}{% else %}ALL{% endif %}{% if p.status == 'disabled' %} &nbsp;·&nbsp; <span class="k">DISABLED</span>{% endif %}</td></tr>
+{%- endmacro %}
+
+{% macro pol_row_removed(p) -%}
+<tr class="row-removed"><td class="D">−</td><td>{{ p.seq }}</td>
+  <td><strong>{{ p.name or '—' }}</strong></td>
+  <td class="det">{{ p.srcintf or '—' }} → {{ p.dstintf or '—' }} &nbsp;·&nbsp; {{ p.action or '—' }} &nbsp;·&nbsp; {{ p.srcaddr or '—' }} → {{ p.dstaddr or '—' }} &nbsp;·&nbsp; {% if p.services %}{{ p.services|join(', ') }}{% else %}ALL{% endif %}{% if p.status == 'disabled' %} &nbsp;·&nbsp; <span class="k">DISABLED</span>{% endif %}</td></tr>
+{%- endmacro %}
+
+{% macro obj_row(item, code, sign) -%}
+<tr class="row-{{ 'added' if code == 'A' else 'removed' }}"><td class="{{ code }}">{{ sign }}</td>
+  <td><strong>{{ item.name if item.name is defined else (item.seq if item.seq is defined else '—') }}</strong></td>
+  <td class="det">{% for k, v in item.items() if k not in ('name','seq','usage_count','dnat','psk_set') and v and k not in ('phase2','phase2_status') %}<span class="k">{{ k }}:</span> {{ v }}&nbsp;&nbsp;{% endfor %}</td></tr>
+{%- endmacro %}
+
+{% macro changed_obj_card(ch) -%}
+{% set after = ch.after if ch.after is mapping else ch.get('after', {}) %}
+<div class="chg-card">
+  <div class="chg-head"><span class="sig">~</span>{{ ch.key }}</div>
+  <div class="chg-fields">
+    {% for f in ch.fields %}
+    {% if f.is_list %}
+    <div class="chg-row"><span class="k">{{ f.field }}</span><span class="v">
+      {% for x in f.before or [] %}{% if x not in (f.after or []) %}<span class="chip pol-chip rem">{{ x }}</span>{% endif %}{% endfor %}
+      {% for x in f.after or [] %}{% if x not in (f.before or []) %}<span class="chip pol-chip add">{{ x }}</span>{% endif %}{% endfor %}
+    </span></div>
+    {% else %}
+    <div class="chg-row"><span class="k">{{ f.field }}</span><span class="v">
+      {% if f.before %}<span class="old">{{ f.before }}</span><span class="arr">→</span>{% endif %}
+      <span class="new">{{ f.after or '—' }}</span>
+    </span></div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro p2_body(p2) -%}
+{% if p2.added %}<div style="font-family:var(--mono);font-size:11px;margin-bottom:6px">{% for it in p2.added %}<div style="padding:2px 0"><span style="color:var(--green);font-weight:700">+</span> {{ it.tunnel or '' }} / {{ it.name or '' }} — {{ it.proposal or '—' }}{% if it.dhgrp %} · dh{{ it.dhgrp.split(' ')[0] }}{% endif %}{% if it.src_subnet %} · src {{ it.src_subnet }}{% endif %}{% if it.dst_subnet %} · dst {{ it.dst_subnet }}{% endif %}</div>{% endfor %}</div>{% endif %}
+{% if p2.removed %}<div style="font-family:var(--mono);font-size:11px;margin-bottom:6px">{% for it in p2.removed %}<div style="padding:2px 0"><span style="color:var(--red);font-weight:700">−</span> {{ it.tunnel or '' }} / {{ it.name or '' }} — {{ it.proposal or '—' }}{% if it.dhgrp %} · dh{{ it.dhgrp.split(' ')[0] }}{% endif %}</div>{% endfor %}</div>{% endif %}
+{% if p2.changed %}<div style="font-family:var(--mono);font-size:11px">{% for ch in p2.changed %}<div style="padding:2px 0"><span style="color:var(--amber);font-weight:700">~</span> {{ ch.after.tunnel or '' }} / {{ ch.after.name or '' }} — {% for f in ch.fields %}{{ f.field }}: <span style="color:var(--red);text-decoration:line-through">{{ f.before }}</span> → <span style="color:var(--green)">{{ f.after }}</span> {% endfor %}</div>{% endfor %}</div>{% endif %}
+{%- endmacro %}
+
+<div class="page">
+<aside class="sidebar">
+  <div class="brand">{{ brand_icon }}<b>FORTIDOC</b></div>
+  <hr>
+  <div class="sb-search">{{ search_icon }}
+    <input id="searchInput" type="text" placeholder="Search sections…" oninput="searchReport()">
+    <div class="matches" id="searchCount">0 matches</div>
+  </div>
+  <div class="group">DIFF SECTIONS</div>
+  <nav class="toc">
+    <a class="item" href="#overview">{{ overview_icon }}<span class="num">01</span><span class="item-txt">OVERVIEW</span></a>
+    <a class="item" href="#index">{{ index_icon }}<span class="num">02</span><span class="item-txt">CHANGE INDEX</span>
+      <span class="badge">{{ total }}</span></a>
+    {% for s in sections %}
+    <a class="item" href="#{{ s.id }}">{{ s.icon }}<span class="num">{{ '%02d'|format(loop.index + 2) }}</span>
+      <span class="item-txt">{{ s.title|upper }}</span>{% if s.count %}<span class="badge">{{ s.count }}</span>{% endif %}</a>
+    {% endfor %}
+  </nav>
+  <div class="device">
+    <hr>
+    <div class="host">{{ hostname_b|upper }}</div>
+    <div class="build">{{ version_a.firmware or '—' }} → {{ version_b.firmware or '—' }}</div>
+  </div>
+</aside>
+<div class="content">
+<header class="header">
+  <div class="eyebrow">FIREDOC — CONFIGURATION DIFF REPORT</div>
+  <h1>{{ hostname_a }} <span style="color:var(--accent);font-weight:400">→</span> {{ hostname_b }}</h1>
+  <div class="subtitle">{{ total }} changes across {{ changed_secs }} of {{ sections|length }} configuration sections</div>
+  <div class="chips">
+    <span class="chip">GENERATED {{ gen_ts }}</span>
+    <span class="chip green">+{{ summary.added }} ADDED</span>
+    <span class="chip" style="color:var(--amber);background:#FBBF2414;border-color:#FBBF2455">~{{ summary.changed }} CHANGED</span>
+    <span class="chip" style="color:var(--red);background:#F8717114;border-color:#F8717155">−{{ summary.removed }} REMOVED</span>
+    <span class="chip">{{ summary.unchanged_sections }} UNCHANGED</span>
+  </div>
+</header>
+
+<!-- 01 OVERVIEW -->
+<section class="section" id="overview">
+  <div class="sec-head"><span class="sec-num">01</span>
+    <span class="sec-title">OVERVIEW</span><span class="sec-line"></span></div>
+  <div class="stats dstats" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+    <div class="stat"><div class="stat-chip c-green"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+      <div class="val" style="color:var(--green)">{{ summary.added }}</div>
+      <div class="lbl">ADDED</div></div>
+    <div class="stat"><div class="stat-chip c-red"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></div>
+      <div class="val" style="color:var(--red)">{{ summary.removed }}</div>
+      <div class="lbl">REMOVED</div></div>
+    <div class="stat"><div class="stat-chip c-amber"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/></svg></div>
+      <div class="val" style="color:var(--amber)">{{ summary.changed }}</div>
+      <div class="lbl">CHANGED</div></div>
+    <div class="stat"><div class="stat-chip c-blue"><svg class="ic" viewBox="0 0 24 24"><path d="m5 13 4 4L19 7"/></svg></div>
+      <div class="val">{{ summary.unchanged_sections }}</div>
+      <div class="lbl">UNCHANGED SECTIONS</div></div>
+  </div>
+  {% if grand > 0 %}
+  <div class="panel" style="margin-top:16px">
+    <div class="p-title">CHANGE PROPORTION</div>
+    <div class="vbar">
+      <span class="v-a" style="width:{{ pct_add|round(1) }}%"></span>
+      <span class="v-m" style="width:{{ pct_chg|round(1) }}%"></span>
+      <span class="v-d" style="width:{{ pct_del|round(1) }}%"></span>
+      <span class="v-u" style="width:{{ pct_same|round(1) }}%"></span>
+    </div>
+    <div class="vlegend">
+      <span><span class="dot v-a"></span>{{ summary.added }} added</span>
+      <span><span class="dot v-m"></span>{{ summary.changed }} changed</span>
+      <span><span class="dot v-d"></span>{{ summary.removed }} removed</span>
+      <span><span class="dot v-u"></span>{{ summary.unchanged_sections }} unchanged</span>
+      <span class="vl-total">{{ total }} of {{ grand }} objects modified</span>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<!-- 02 CHANGE INDEX -->
+<section class="section" id="index">
+  <div class="sec-head"><span class="sec-num">02</span>
+    <span class="sec-title">CHANGE INDEX</span><span class="sec-line"></span></div>
+  <div class="status-panel">
+    <div class="subhead" style="border:none;background:transparent;padding:12px 16px;cursor:default">
+      <span class="subhead-title" style="font-size:11px">A ADDED · M MODIFIED · D REMOVED — CLICK A ROW TO JUMP TO ITS SECTION</span>
+      <span class="sh-tools" style="margin-left:auto">
+        <button class="shf active" type="button" data-f="all">All <span class="n">0</span></button>
+        <button class="shf" type="button" data-f="A">Added <span class="n">0</span></button>
+        <button class="shf" type="button" data-f="M">Changed <span class="n">0</span></button>
+        <button class="shf" type="button" data-f="D">Removed <span class="n">0</span></button>
+        <button class="shf" id="idxToggle" type="button" title="Collapse / expand index">▾</button>
+      </span>
+    </div>
+    <div class="idx-body" id="idx-body">
+      {% set ns = namespace(any=False) %}
+      {% for s in sections %}
+      {% if s.git_status or (s.phase2_status is defined and s.phase2_status) %}
+      {% set ns.any = true %}
+      <div class="status-group" data-sid="{{ s.id }}">
+        <div class="status-sec" onclick="this.classList.toggle('closed');var r=this.nextElementSibling;r.style.display=this.classList.contains('closed')?'none':'block'">
+          <span class="caret">▼</span> {{ s.title|upper }}
+          <span class="sec-count">{{ s.git_status|length }}{% if s.phase2_status is defined and s.phase2_status %} + {{ s.phase2_status|length }} PHASE-2{% endif %} CHANGE{{ '' if s.git_status|length == 1 and not (s.phase2_status is defined and s.phase2_status) else 'S' }}</span>
+        </div>
+        <div class="status-rows">
+          {% for row in s.git_status %}
+          <div class="status-line" onclick="scrollToTarget('{{ s.id }}')">
+            <span class="status-code {{ row.code }}">{{ row.code }}</span>
+            <span class="status-path">{{ row.path }}</span></div>
+          {% endfor %}
+          {% if s.phase2_status is defined and s.phase2_status %}
+          {% for row in s.phase2_status %}
+          <div class="status-line" onclick="scrollToTarget('{{ s.id }}')">
+            <span class="status-code {{ row.code }}">{{ row.code }}</span>
+            <span class="status-path">{{ row.path }}</span></div>
+          {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+      {% if not ns.any %}
+      <div class="status-clean">No changes — the two configurations are identical.</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% for s in sections %}
+{% set d = s.diff %}
+{% set n_add = d.added|length if d else 0 %}
+{% set n_rem = d.removed|length if d else 0 %}
+{% set n_chg = d.changed|length if d else 0 %}
+{% set n_p2 = 0 %}
+{% if s.phase2_diff is defined and s.phase2_diff %}
+{% set n_p2 = s.phase2_diff.added|length + s.phase2_diff.removed|length + s.phase2_diff.changed|length %}
+{% endif %}
+<section class="section" id="{{ s.id }}">
+  <div class="sec-head">
+    <span class="sec-num">{{ '%02d'|format(loop.index + 2) }}</span>
+    <span class="sec-title">{{ s.title|upper }}</span>
+    {% if d %}
+      <span class="sec-count A">+{{ n_add }}</span>
+      <span class="sec-count D">−{{ n_rem }}</span>
+      <span class="sec-count M">~{{ n_chg }}</span>
+      {% if s.renumbered %}<span class="sec-count N">↻ RENUMBERED</span>{% endif %}
+      {% if n_p2 %}<span class="sec-count M">PHASE2 ~{{ n_p2 }}</span>{% endif %}
+    {% elif s.changed %}
+      <span class="sec-count M">CHANGED</span>
+    {% else %}
+      <span class="sec-count N">UNCHANGED</span>
+    {% endif %}
+    <span class="sec-line"></span>
+  </div>
+
+  {% if d %}
+    {% if s.id == 'policies' %}
+      {% if n_add %}
+      {% set rows = [] %}
+      {% for p in d.added %}{% set _ = rows.append(pol_row_added(p)) %}{% endfor %}
+      {{ subhead_block('ADDED (' ~ n_add ~ ')', tbl('<th></th><th>SEQ</th><th>POLICY</th><th>DETAIL</th>', rows)) }}
+      {% endif %}
+      {% if n_rem %}
+      {% set rows = [] %}
+      {% for p in d.removed %}{% set _ = rows.append(pol_row_removed(p)) %}{% endfor %}
+      {{ subhead_block('REMOVED (' ~ n_rem ~ ')', tbl('<th></th><th>SEQ</th><th>POLICY</th><th>DETAIL</th>', rows)) }}
+      {% endif %}
+      {% if n_chg %}
+      {% set cards = [] %}
+      {% for ch in d.changed %}{% set _ = cards.append(changed_pol_card(ch)) %}{% endfor %}
+      {{ subhead_block('CHANGED (' ~ n_chg ~ ')', cards|join('')) }}
+      {% endif %}
+    {% else %}
+      {% if n_add %}
+      {% set rows = [] %}
+      {% for it in d.added %}{% set _ = rows.append(obj_row(it, 'A', '+')) %}{% endfor %}
+      {{ subhead_block('ADDED (' ~ n_add ~ ')', tbl('<th></th><th>NAME</th><th>DETAIL</th>', rows)) }}
+      {% endif %}
+      {% if n_rem %}
+      {% set rows = [] %}
+      {% for it in d.removed %}{% set _ = rows.append(obj_row(it, 'D', '−')) %}{% endfor %}
+      {{ subhead_block('REMOVED (' ~ n_rem ~ ')', tbl('<th></th><th>NAME</th><th>DETAIL</th>', rows)) }}
+      {% endif %}
+      {% if n_chg %}
+      {% set cards = [] %}
+      {% for ch in d.changed %}{% set _ = cards.append(changed_obj_card(ch)) %}{% endfor %}
+      {{ subhead_block('CHANGED (' ~ n_chg ~ ')', cards|join('')) }}
+      {% endif %}
+    {% endif %}
+
+    {% if s.renumbered %}
+    <div class="renumbered-note">↻ <b>{{ s.renumbered|length }} {{ s.title|lower }}</b> only changed their sequence number ({{ s.renumbered[0].key }}{% if s.renumbered|length > 1 %} + {{ s.renumbered|length - 1 }} more{% endif %}) — content unchanged.</div>
+    {% endif %}
+
+    {% if n_p2 %}
+    {{ subhead_block('PHASE-2 SELECTORS (' ~ n_p2 ~ ')', p2_body(s.phase2_diff)) }}
+    {% endif %}
+
+  {% else %}
+    {% if s.changed %}
+    <div class="ba-grid">
+      <div class="ba-col before"><div class="ba-lbl">Before</div>
+        {% for k, v in s.before.items() if v %}<div class="ba-row"><span class="k">{{ k }}:</span> {{ v }}</div>{% endfor %}
+      </div>
+      <div class="ba-col after"><div class="ba-lbl">After</div>
+        {% for k, v in s.after.items() if v %}<div class="ba-row"><span class="k">{{ k }}:</span> {{ v }}</div>{% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state">No changes detected.</div>
+    {% endif %}
+  {% endif %}
+</section>
+{% endfor %}
+
+<footer>FORTIDOC · {{ hostname_a|upper }} → {{ hostname_b|upper }} · GENERATED {{ gen_ts }}</footer>
+</div>
+</div>
+<div class="footerbar"></div>
+
+<script>
+{{ base_js }}
+</script>
+<script>
+/* ── diff init: change-index filters + policy card toggles + / key ── */
+(function(){
+ var counts={A:0,M:0,D:0};
+ document.querySelectorAll('.status-line .status-code').forEach(function(c){
+  if(c.classList.contains('A'))counts.A++;
+  else if(c.classList.contains('M'))counts.M++;
+  else if(c.classList.contains('D'))counts.D++;
+ });
+ function setFilter(f){
+  document.querySelectorAll('.shf[data-f]').forEach(function(b){b.classList.toggle('active',b.dataset.f===f);});
+  document.querySelectorAll('.status-line').forEach(function(l){
+   var code=l.querySelector('.status-code');
+   var show=(f==='all')||(code&&code.classList.contains(f));
+   l.style.display=show?'':'none';
+  });
+  document.querySelectorAll('.status-group').forEach(function(g){
+   var any=Array.from(g.querySelectorAll('.status-line')).some(function(l){return l.style.display!=='none';});
+   g.style.opacity=any?'':'0.3';
+  });
+ }
+ document.querySelectorAll('.shf[data-f]').forEach(function(btn){
+  var f=btn.dataset.f;
+  var n=f==='all'?(counts.A+counts.M+counts.D):counts[f];
+  var lbl=btn.querySelector('.n');
+  if(lbl)lbl.textContent=n;
+  btn.addEventListener('click',function(){setFilter(f);});
+ });
+ var idxBody=document.getElementById('idx-body');
+ var idxToggle=document.getElementById('idxToggle');
+ if(idxBody&&idxToggle){
+  idxToggle.addEventListener('click',function(){
+   var hidden=idxBody.style.display==='none';
+   idxBody.style.display=hidden?'':'none';
+   idxToggle.textContent=hidden?'▾':'▸';
+  });
+ }
+ document.querySelectorAll('.diff-pol-card').forEach(function(card){
+  var h=card.querySelector('.diff-pol-header');
+  if(!h)return;
+  h.addEventListener('click',function(){card.classList.toggle('open');});
+ });
+ document.addEventListener('keydown',function(e){
+  var inSearch=document.activeElement&&document.activeElement.id==='searchInput';
+  if(e.key==='/'&&!inSearch&&!/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)){
+   e.preventDefault();
+   var inp=document.getElementById('searchInput');
+   if(inp)inp.focus();
+  }
+  if(inSearch&&e.key==='Escape'){
+   document.activeElement.value='';searchReport();document.activeElement.blur();
+  }
+ });
+})();
+</script>
+</body>
+</html>

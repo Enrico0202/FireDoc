@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FortiDoc — Admin</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+:root{--bg:#0b0f17;--surface:#111827;--border:#1e293b;--text:#e2e8f0;
+--muted:#94a3b8;--dim:#64748b;--accent:#D97706;--accent2:#F2A65A;--amber:#FBBF24;
+--green:#34D399;--red:#F87171;
+--gradient:linear-gradient(135deg,#D97706,#B45309);
+--mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,'Liberation Mono',Menlo,monospace;
+--sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;
+display:grid;grid-template-rows:auto 1fr auto;position:relative;overflow-x:hidden}
+body::before{content:"";position:absolute;left:50%;top:-220px;width:900px;height:520px;
+transform:translateX(-50%);pointer-events:none;
+background:radial-gradient(ellipse at center,rgba(217,119,6,.16) 0%,rgba(217,119,6,0) 70%);
+filter:blur(40px);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateX(-50%) scale(1);opacity:.75}
+50%{transform:translateX(-50%) scale(1.12);opacity:1}}
+
+/* ---- nav ---- */
+.brand-bar{position:relative;padding:0 48px;height:64px;display:flex;align-items:center;
+justify-content:center;background:linear-gradient(180deg,#131B2C,#0D1420);
+border-bottom:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.brand-bar::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+background:linear-gradient(90deg,transparent,rgba(217,119,6,.7) 25%,rgba(217,119,6,.7) 75%,transparent)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:#141B2A;
+border:1px solid rgba(217,119,6,.35);display:flex;align-items:center;justify-content:center}
+.brand-mark svg{width:16px;height:16px;fill:var(--accent2)}
+.brand-word{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.brand-back{position:absolute;left:48px;top:50%;transform:translateY(-50%);
+display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent2);
+text-decoration:none;padding:7px 16px;border:1px solid rgba(217,119,6,.35);border-radius:999px;
+background:rgba(217,119,6,.07);transition:all .2s}
+.brand-back:hover{background:rgba(217,119,6,.15)}
+.brand-back svg{width:12px;height:12px;fill:var(--accent2)}
+.sso-badge{position:absolute;right:48px;top:50%;transform:translateY(-50%);
+display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);
+padding:6px 14px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.sso-badge b{color:var(--text);font-weight:600}
+.sso-badge i{font-style:normal;color:var(--dim)}
+
+/* ---- notices ---- */
+.notice,.error-banner{max-width:720px;margin:20px auto 0;padding:11px 16px;border-radius:9px;font-size:12px}
+.notice{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);color:var(--green)}
+.error-banner{background:#2d1515;border:1px solid rgba(248,113,113,.5);color:#fca5a5}
+
+/* ---- login ---- */
+.login-wrap{display:flex;align-items:center;justify-content:center;padding:48px 24px}
+.login-card{width:420px;background:var(--surface);border:1px solid var(--border);
+border-radius:16px;padding:46px 24px 24px}
+.login-title{font-size:21px;font-weight:800;text-align:center;letter-spacing:-.3px}
+.login-sub{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+.login-form{margin-top:24px}
+.field-label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.field-input{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);
+border-radius:9px;color:var(--text);font-size:14px;font-family:var(--sans);outline:none;transition:border-color .2s}
+.field-input:focus{border-color:rgba(217,119,6,.5)}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+padding:13px 20px;border:none;border-radius:10px;font-size:14px;font-weight:700;
+cursor:pointer;transition:all .2s;font-family:var(--sans);text-decoration:none}
+.btn-primary{background:var(--gradient);color:#fff;box-shadow:0 3px 14px rgba(217,119,6,.25);margin-top:18px}
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.sso-sep{display:flex;align-items:center;gap:12px;margin:14px 0;font-size:11px;color:var(--dim)}
+.sso-sep::before,.sso-sep::after{content:"";flex:1;height:1px;background:var(--border)}
+.btn-sso{background:var(--bg);border:1px solid var(--border);color:var(--muted)}
+.btn-sso:hover{border-color:rgba(217,119,6,.4);color:var(--accent2)}
+
+/* ---- settings ---- */
+.panel{display:flex;flex-direction:column;align-items:center;padding:32px 24px 56px}
+.panel-inner{max-width:720px;width:100%;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+.card-title{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.card-sub{font-size:12px;color:var(--muted);margin-top:4px;margin-bottom:20px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.check-row{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:13px;color:var(--text);cursor:pointer}
+.check-row input{accent-color:var(--accent);width:15px;height:15px}
+.sec-label{font-size:12px;font-weight:700;color:var(--muted);margin:20px 0 8px;
+padding-bottom:8px;border-bottom:1px solid var(--border)}
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px}
+.sec-grid label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+.sec-grid input{accent-color:var(--accent)}
+.sec-grid .hidden-sec{color:var(--dim)}
+
+/* findings */
+.finding-card{margin-top:14px;background:var(--bg);border:1px solid var(--border);
+border-radius:10px;padding:16px 18px}
+.finding-head{display:flex;align-items:center;gap:12px}
+.finding-head input{accent-color:var(--accent);width:15px;height:15px}
+.finding-title{font-size:14px;font-weight:700;color:var(--text)}
+.finding-ref{margin-left:auto;font-size:10px;font-weight:600;color:var(--accent2);
+padding:3px 10px;border:1px solid rgba(217,119,6,.35);border-radius:999px;background:rgba(217,119,6,.07)}
+.finding-desc{font-size:12px;color:var(--dim);margin:6px 0 12px 27px}
+.sev-row{display:flex;gap:8px;margin-left:27px}
+.sev-row label{position:relative;cursor:pointer}
+.sev-row input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.sev-row span{display:inline-block;padding:5px 14px;font-size:11px;font-weight:600;
+color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:999px;transition:all .15s}
+.sev-row input:checked + span{background:var(--accent);border-color:var(--accent);color:#fff}
+.finding-rem{margin:12px 0 0 27px;width:calc(100% - 27px);padding:9px 12px;background:var(--surface);
+border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;
+font-family:var(--sans);outline:none}
+.finding-rem:focus{border-color:rgba(217,119,6,.5)}
+
+/* backup two-pane */
+.backup-head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.backup-icon{width:44px;height:44px;border-radius:11px;background:rgba(217,119,6,.08);
+border:1px solid rgba(217,119,6,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.backup-icon svg{width:18px;height:18px;fill:var(--accent2)}
+.backup-grid{display:grid;grid-template-columns:1fr 1px 1fr;gap:24px}
+.backup-divider{background:var(--border)}
+.pane-label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+letter-spacing:1.5px;color:var(--dim);margin-bottom:10px}
+.pane-label::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.pane-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.btn-ghost{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+padding:11px;border:1px solid rgba(217,119,6,.35);border-radius:10px;background:transparent;
+color:var(--accent2);font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;
+transition:all .2s;font-family:var(--sans)}
+.btn-ghost:hover{background:rgba(217,119,6,.08)}
+.btn-ghost svg{width:12px;height:12px;fill:var(--accent2)}
+.btn-ghost:disabled{opacity:.35;cursor:not-allowed}
+.file-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+padding:18px;border:2px dashed var(--border);border-radius:10px;cursor:pointer;
+font-size:12px;color:var(--muted);transition:all .2s;text-align:center;margin-bottom:10px}
+.file-drop:hover{border-color:rgba(217,119,6,.4)}
+.file-drop svg{width:16px;height:16px;fill:var(--dim)}
+.file-drop input{display:none}
+.file-drop .file-chip{display:none;font-family:var(--mono);font-size:11px;color:var(--text);
+background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.3);border-radius:6px;padding:5px 10px}
+.file-drop.has-file{border-style:solid;border-color:rgba(217,119,6,.35)}
+.file-drop.has-file .file-chip{display:block}
+.file-drop.has-file .file-drop-hint{display:none}
+
+/* logout */
+.logout-card{display:flex;align-items:center;justify-content:center;padding:8px;
+background:var(--red);border-color:transparent}
+.logout-card form{width:100%}
+.logout-card .btn-primary{margin-top:0;padding:7px 20px;background:transparent;box-shadow:none}
+.logout-card .btn-primary:hover{background:rgba(255,255,255,.1)}
+
+
+/* custom findings (ported contract block) */
+.field label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.hint{font-size:11px;color:var(--dim);line-height:1.5;margin-bottom:10px}
+.fnd-grid{display:flex;flex-direction:column;gap:9px;border-top:1px solid var(--border);padding-top:10px;margin-top:4px}
+.fnd-card{display:grid;grid-template-columns:auto 1fr;gap:5px 11px;align-items:start;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;transition:border-color .15s,opacity .15s}
+.fnd-card:hover{border-color:var(--dim)}
+.fnd-card input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);margin-top:3px;cursor:pointer}
+.fnd-card:has(input[name^="finding_enabled_"]:not(:checked)){opacity:.5}
+.fnd-card:has(input[name^="finding_enabled_"]:not(:checked)) .fnd-title{text-decoration:line-through}
+.fnd-off-badge{display:none;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fca5a5;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);border-radius:4px;padding:1px 6px}
+.fnd-card:has(input[name^="finding_enabled_"]:not(:checked)) .fnd-off-badge{display:inline-block}
+.fnd-enable-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-top:5px;cursor:pointer;user-select:none}
+.fnd-enable{display:flex;flex-direction:column;align-items:center;gap:3px}
+.fnd-remove{font-size:11px;font-weight:600;color:#fca5a5;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.35);border-radius:6px;padding:4px 10px;cursor:pointer;transition:background .15s,color .15s}
+.fnd-remove:hover{background:#ef4444;color:#0b0f17}
+.fnd-add{font-size:11px;font-weight:600;color:#6ee7b7;background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.35);border-radius:6px;padding:4px 10px;cursor:pointer;transition:background .15s,color .15s;margin-left:auto}
+.fnd-add:hover{background:#10b981;color:#0b0f17}
+.fnd-card.fnd-removing{opacity:.5}
+.fnd-card.fnd-removing input,.fnd-card.fnd-removing textarea{border-color:var(--red,#ef4444)}
+.fnd-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.fnd-title{font-size:13px;font-weight:600;color:var(--text)}
+.fnd-ref{font-size:10px;font-family:var(--mono);color:var(--accent);background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);border-radius:4px;padding:1px 6px}
+.fnd-desc{font-size:11px;color:var(--dim);grid-column:2;line-height:1.4;margin-bottom:3px}
+.fnd-row{display:flex;gap:8px;grid-column:2;flex-wrap:wrap;align-items:center}
+.sev-chips{display:inline-flex;gap:5px;flex-wrap:wrap}
+.sev-chip{position:relative;display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;line-height:1.2;transition:all .15s;white-space:nowrap}
+.sev-chip input{position:absolute;opacity:0;pointer-events:none}
+.sev-chip:hover{border-color:var(--dim);color:var(--text)}
+.sev-chip:has(input:checked){color:#fff;transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.sev-chip.sev-high:has(input:checked){background:#dc2626;border-color:#dc2626}
+.sev-chip.sev-medium:has(input:checked){background:#d97706;border-color:#d97706}
+.sev-chip.sev-low:has(input:checked){background:#2563eb;border-color:#2563eb}
+.sev-chip.sev-info:has(input:checked){background:#475569;border-color:#475569}
+.fnd-card input.fnd-title,.fnd-custom-add input.fnd-title{grid-column:2;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12.5px;font-weight:600;color:var(--text);outline:none}
+.fnd-card input.fnd-title:focus,.fnd-custom-add input.fnd-title:focus{border-color:var(--accent)}
+.fnd-rem{grid-column:2;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text);font-family:var(--mono);outline:none}
+.fnd-rem:focus{border-color:var(--accent)}
+.fnd-snip{grid-column:2;width:100%;min-height:96px;max-height:420px;overflow-y:auto;resize:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--text);font-family:var(--mono);line-height:1.6;outline:none;white-space:pre-wrap;overflow-x:hidden}
+.fnd-snip:focus{border-color:var(--accent)}
+.fnd-snip::-webkit-scrollbar{width:10px}
+.fnd-snip::-webkit-scrollbar-track{background:transparent}
+.fnd-snip::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px;border:2px solid var(--bg)}
+.fnd-snip::-webkit-scrollbar-thumb:hover{background:var(--dim)}
+.fnd-snip{scrollbar-width:thin;scrollbar-color:var(--border) var(--bg)}
+.fnd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim)}
+.fnd-custom-card > .fnd-enable{grid-column:1;grid-row:1}
+.fnd-custom-card .fnd-head{grid-column:2;grid-row:1}
+.fnd-custom-card .fnd-head input.fnd-title{flex:1 1 180px;width:auto;min-width:120px}
+.fnd-custom-card .fnd-off-badge,.fnd-custom-card .fnd-remove{margin-left:auto}
+.fnd-custom-card .fnd-row{grid-column:2}
+.fnd-custom-card .fnd-pattern{grid-column:2}
+.fnd-custom-card .fnd-rem{grid-column:2}
+.fnd-custom-card .fnd-snip{grid-column:2}
+.fnd-pattern{grid-column:2;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text);font-family:var(--mono);outline:none}
+.fnd-pattern:focus{border-color:var(--accent)}
+.fnd-custom-add{display:grid;grid-template-columns:auto 1fr;gap:5px 11px;align-items:start;border-top:1px solid var(--border);padding-top:10px;margin-top:6px}
+.fnd-custom-add .fnd-head{grid-column:2}
+.fnd-custom-add .fnd-title{grid-column:2;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12.5px;font-weight:600;color:var(--text);outline:none}
+.fnd-custom-add .fnd-title:focus{border-color:var(--accent)}
+.fnd-custom-add .fnd-rem{grid-column:2;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text);font-family:var(--mono);outline:none}
+.fnd-custom-add .fnd-rem:focus{border-color:var(--accent)}
+.fnd-custom-add .fnd-snip{grid-column:2;width:100%;min-height:96px;max-height:420px;overflow-y:auto;resize:none;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:13px;color:var(--text);font-family:var(--mono);line-height:1.6;outline:none;white-space:pre-wrap;overflow-x:hidden}
+.fnd-custom-add .fnd-snip:focus{border-color:var(--accent)}
+.fnd-card.fnd-custom-card:has(input[name^="custom_enabled_"]:not(:checked)){opacity:.5}
+.fnd-card.fnd-custom-card:has(input[name^="custom_enabled_"]:not(:checked)) .fnd-title{text-decoration:line-through}
+.fnd-card.fnd-custom-card:has(input[name^="custom_enabled_"]:not(:checked)) .fnd-off-badge{display:inline-block}
+/* ---- footer ---- */
+.footer-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 24px;font-size:11px;color:var(--dim);
+background:#0D1420;border-top:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.footer-links{display:flex;align-items:center;gap:16px}
+.footer-links a{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--accent2)}
+.footer-links svg{width:11px;height:11px;fill:currentColor}
+
+@media(max-width:760px){.grid2,.sec-grid{grid-template-columns:1fr}
+.backup-grid{grid-template-columns:1fr}.backup-divider{display:none}
+.brand-bar{padding:0 20px}.brand-back{left:20px}.sso-badge{right:20px}}
+</style>
+</head>
+<body>
+
+<header class="brand-bar">
+  <a href="/" class="brand-back">
+    <svg viewBox="0 0 448 512"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
+    Back
+  </a>
+  <a class="brand" href="/">
+    <span class="brand-mark">
+      <svg viewBox="0 0 384 512"><path d="M153.6 29.9l16-21.3C173.6 3.2 180 0 186.7 0C198.4 0 208 9.6 208 21.3V43.5c0 13.1 5.4 25.7 14.9 34.7L307.6 159C356.4 205.6 384 270.2 384 337.7C384 434 306 512 209.7 512H192C86 512 0 426 0 320v-3.8c0-48.8 19.4-95.6 53.9-130.1l3.5-3.5c4.2-4.2 10-6.6 16-6.6C85.9 176 96 186.1 96 198.6V288c0 35.3 28.7 64 64 64s64-28.7 64-64v-3.9c0-18-7.2-35.3-19.9-48l-38.6-38.6c-24-24-37.5-56.7-37.5-90.7c0-27.7 9-54.8 25.6-76.9z"/></svg>
+    </span>
+    <span class="brand-word">FortiDoc — Admin</span>
+  </a>
+  {% if logged_in and admin_email %}
+  <span class="sso-badge"><b>{{ admin_email }}</b>{% if oidc_enabled %}<i>· SSO</i>{% endif %}</span>
+  {% endif %}
+</header>
+
+{% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+{% if error %}<div class="error-banner">{{ error }}</div>{% endif %}
+
+{% if not logged_in %}
+<!-- ==================== LOGGED OUT ==================== -->
+<main class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">Admin login</div>
+    <div class="login-sub">Restricted area — enter the admin password.</div>
+    <form class="login-form" method="post" action="/admin/login">
+      <label class="field-label" for="pw">Password</label>
+      <input class="field-input" type="password" id="pw" name="password" autocomplete="current-password" autofocus>
+      <button class="btn btn-primary" type="submit">Log in</button>
+    </form>
+    {% if oidc_enabled %}
+    <div class="sso-sep">or</div>
+    <a class="btn btn-sso" href="/oidc/login?next=/admin">Sign in with SSO</a>
+    {% endif %}
+  </div>
+</main>
+
+{% else %}
+<!-- ==================== LOGGED IN ==================== -->
+<main class="panel">
+  <div class="panel-inner">
+
+    <form method="post" action="/admin/save" style="display:contents">
+    <div class="card">
+      <div class="card-title">Report settings</div>
+      <div class="card-sub">Apply to the next report generated for everyone — no restart needed.</div>
+      <div class="grid2">
+        <div>
+          <label class="field-label">Client</label>
+          <input class="field-input" type="text" name="client" value="{{ settings.get('client','') }}">
+        </div>
+        <div>
+          <label class="field-label">Prepared by</label>
+          <input class="field-input" type="text" name="prepared_by" value="{{ settings.get('prepared_by','') }}">
+        </div>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" name="cis_enabled" value="on" {% if settings.get('cis_enabled') %}checked{% endif %}>
+        <span><b>CIS benchmark analysis</b> <span style="color:var(--dim)">— security findings section</span></span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" name="hide_sslvpn" {% if settings.get('hide_sslvpn') %}checked{% endif %}>
+        <span>Hide SSL VPN section</span>
+      </label>
+      <div class="sec-label">Report sections</div>
+      <div class="sec-grid">
+        {% for sid, label in section_labels.items() %}
+        <label>
+          <input type="checkbox" name="section_{{ sid }}" value="on" {% if settings.get('sections',{}).get(sid) %}checked{% endif %}>
+          {{ label }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Security findings</div>
+      <div class="card-sub">{{ finding_catalog|length }} checks + custom — override severity, disable, or edit remediation per check.</div>
+      {% for fid, ftitle, fdesc, fref, dsev, drem in finding_catalog %}
+      {% set ov = settings.get('finding_overrides',{}).get(fid,{}) %}
+      <div class="finding-card">
+        <div class="finding-head">
+          <input type="checkbox" name="finding_enabled_{{ fid }}" value="on" {% if ov.get('enabled', True) %}checked{% endif %}>
+          <span class="finding-title">{{ ftitle }}</span>
+          <span class="finding-ref">{{ fref }}</span>
+        </div>
+        <div class="finding-desc">{{ fdesc }}</div>
+        <div class="sev-row">
+          {% for sev in severities %}
+          <label>
+            <input type="radio" name="finding_sev_{{ fid }}" value="{{ sev }}" {% if ov.get('severity', dsev) == sev %}checked{% endif %}>
+            <span>{{ sev }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        <input class="finding-rem" type="text" name="finding_rem_{{ fid }}" value="{{ ov.get('remediation', drem) }}" placeholder="Remediation hint…">
+      </div>
+      {% endfor %}
+      <label>Custom findings</label>
+      <div class="hint" style="margin-top:0;margin-bottom:6px">Add your own findings. With a <strong>search pattern</strong> (plain text or regex), the engine scans every uploaded config and only shows the finding where the pattern is actually present — the config snippet is captured automatically. Leave the pattern empty for a manual annotation (always shown, snippet pasted by hand). <strong>Remove</strong> drops a finding — click <strong>Save settings</strong> to make changes permanent.</div>
+      {% set customs = settings.custom_findings %}
+      {% for c in customs %}
+        {% set i = loop.index0 %}
+        <div class="fnd-card fnd-custom-card" data-custom-card="{{ i }}">
+          <label class="fnd-enable">
+            <input type="checkbox" name="custom_enabled_{{ i }}" value="on" {% if c.get('enabled', True) %}checked{% endif %}>
+            <span class="fnd-enable-lbl">on</span>
+          </label>
+          <div class="fnd-head">
+            <input type="text" name="custom_title_{{ i }}" value="{{ c.title }}" placeholder="Title" class="fnd-title" title="Title">
+            <span class="fnd-off-badge">disabled</span>
+            <button type="button" class="fnd-remove" data-remove-custom="{{ i }}">Remove</button>
+          </div>
+          <div class="fnd-row">
+            <span class="sev-chips">
+              {% for s in severities %}
+              <label class="sev-chip sev-{{ s }}"><input type="radio" name="custom_sev_{{ i }}" value="{{ s }}" {% if c.severity == s %}checked{% endif %}>{{ s }}</label>
+              {% endfor %}
+            </span>
+          </div>
+          <input type="text" name="custom_pattern_{{ i }}" value="{{ c.pattern }}" placeholder="Search pattern — e.g. set community public (regex OK) — empty = always show" class="fnd-pattern" title="Search pattern (scans every uploaded config)">
+          <input type="text" name="custom_rem_{{ i }}" value="{{ c.remediation }}" placeholder="How to fix it" class="fnd-rem" title="Remediation (fix)">
+          <textarea name="custom_snip_{{ i }}" placeholder="Config snippet — paste the lines from the firewall config that show the issue (shown in the report next to this finding)" class="fnd-snip" title="Config snippet">{{ c.snippet }}</textarea>
+          <input type="hidden" name="custom_id_{{ i }}" value="{{ c.id }}">
+          <input type="hidden" name="custom_desc_{{ i }}" value="{{ c.description }}">
+        </div>
+      {% endfor %}
+      {% set n = customs|length %}
+      <div class="fnd-custom-add">
+        <input type="text" name="custom_title_{{ n }}" placeholder="Add custom finding — title" class="fnd-title">
+        <div class="fnd-head">
+          <span class="fnd-lbl">New</span>
+          <span class="sev-chips">
+            {% for s in severities %}
+            <label class="sev-chip sev-{{ s }}"><input type="radio" name="custom_sev_{{ n }}" value="{{ s }}" {% if s == "info" %}checked{% endif %}>{{ s }}</label>
+            {% endfor %}
+          </span>
+          <button type="button" class="fnd-add" data-add-row>Add</button>
+        </div>
+        <input type="text" name="custom_pattern_{{ n }}" placeholder="Search pattern — e.g. set community public (regex OK) — empty = always show" class="fnd-pattern" title="Search pattern (scans every uploaded config)">
+        <input type="text" name="custom_rem_{{ n }}" placeholder="How to fix it" class="fnd-rem">
+        <textarea name="custom_snip_{{ n }}" placeholder="Config snippet — paste the lines from the firewall config that show the issue" class="fnd-snip"></textarea>
+        <input type="hidden" name="custom_count" value="{{ n + 1 }}">
+      </div>
+    
+    </div>
+
+    <button class="btn btn-primary" type="submit">Save settings</button>
+    </form>
+
+    <div class="card">
+      <div class="backup-head">
+        <span class="backup-icon">
+          <svg viewBox="0 0 512 512"><path d="M256 0c4.6 0 9.2 1 13.4 2.9L457.7 82.8c22 9.3 38.4 31 38.3 57.2-.5 99.2-41.3 280.7-213.6 363.2-16.7 8-36.1 8-52.8 0C57.3 420.7 16.5 239.2 16 140c-.1-26.2 16.3-47.9 38.3-57.2L242.7 2.9C246.9 1 251.4 0 256 0z"/></svg>
+        </span>
+        <div>
+          <div class="card-title">Backup / restore</div>
+          <div class="card-sub" style="margin-bottom:0">Take this device's FortiDoc settings with you</div>
+        </div>
+      </div>
+      <div class="backup-grid">
+        <div>
+          <div class="pane-label">EXPORT</div>
+          <div class="pane-desc">Download all settings as fortidoc-backup.json to move them to another install.</div>
+          <a class="btn-ghost" href="/admin/export">
+            <svg viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM216 232V334.1l31-31c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9l-72 72c-9.4 9.4-24.6 9.4-33.9 0l-72-72c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l31 31V232c0-13.3 10.7-24 24-24s24 10.7 24 24z"/></svg>
+            Download backup
+          </a>
+        </div>
+        <div class="backup-divider"></div>
+        <div>
+          <div class="pane-label">RESTORE</div>
+          <form method="post" action="/admin/import" enctype="multipart/form-data" id="import-form">
+            <label class="file-drop" id="file-drop">
+              <svg viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM216 408c0 13.3-10.7 24-24 24s-24-10.7-24-24V305.9l-31 31c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l72-72c9.4-9.4 24.6-9.4 33.9 0l72 72c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-31-31V408z"/></svg>
+              <span class="file-drop-hint">Choose backup file… (.json)</span>
+              <span class="file-chip file-name"></span>
+              <input type="file" name="settings" accept=".json">
+            </label>
+            <button class="btn-ghost" type="submit" id="import-btn" disabled>Import &amp; apply</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="card logout-card">
+      <form method="post" action="/admin/logout">
+        <button class="btn btn-primary" type="submit">Log out</button>
+      </form>
+    </div>
+
+  </div>
+</main>
+{% endif %}
+
+<footer class="footer-bar">© 2026 FortiDoc — All Rights Reserved
+  <span class="footer-links">
+    <a href="/docs">
+      <svg viewBox="0 0 448 512"><path d="M448 96c0-35.3-28.7-64-64-64H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96zM128 320c-17.7 0-32-14.3-32-32s14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128zM96 160c0-17.7 14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128c-17.7 0-32-14.3-32-32zM128 256c-17.7 0-32-14.3-32-32s14.3-32 32-32H256c17.7 0 32 14.3 32 32s-14.3 32-32 32H128z"/></svg>
+      API Docs
+    </a>
+  </span>
+</footer>
+
+<script>
+// Auto-grow the config snippet field: the bigger the snippet, the bigger the
+// box (capped at max-height, then scrolls). Manual drag-resize still works.
+(function(){
+  function fit(el){
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 420) + "px";
+    el.style.overflowY = el.scrollHeight > 420 ? "auto" : "hidden";
+  }
+  window.__fitSnip = fit;
+  document.querySelectorAll("textarea.fnd-snip").forEach(function(el){
+    fit(el);
+    el.addEventListener("input", function(){ fit(el); });
+  });
+})();
+// Custom findings — Add + Remove, via event delegation so buttons created at
+// runtime (Add spawns a card + a fresh New row) work without re-binding.
+//   Add    : the New row becomes a saved card (gets a Remove button) and a
+//            fresh empty New row takes its place at the next index.
+//   Remove : clears the title — the save route drops title-less rows — and
+//            the finding disappears on the next Save (click again to restore).
+(function(){
+  var counter = {{ n }};  // index the New row's fields currently use
+  document.addEventListener("click", function(ev){
+    var addBtn = ev.target.closest ? ev.target.closest(".fnd-add") : null;
+    if (addBtn && addBtn.closest(".fnd-custom-add")) {
+      var addRow = addBtn.closest(".fnd-custom-add");
+      var title = addRow.querySelector(".fnd-title");
+      var fresh = addRow.cloneNode(true);  // pristine New row, before we mutate
+      addRow.className = "fnd-card fnd-custom-card";
+      addRow.setAttribute("data-custom-card", String(counter));
+      // Rebuild into the saved-card design (same shape as the built-in cards
+      // above): ON checkbox in the left column, editable title in the head row
+      // (col 2) with a "disabled" badge + Remove button, chips under the title.
+      var oldTitle = addRow.querySelector("input.fnd-title");
+      oldTitle.name = "custom_title_" + counter;
+      oldTitle.title = "Title";
+      oldTitle.placeholder = "Title";
+      var chips = addRow.querySelector(".sev-chips");
+      if (chips) chips.querySelectorAll("input").forEach(function(r){ r.name = "custom_sev_" + counter; });
+      var patIn = addRow.querySelector("input[name^=custom_pattern_]");
+      if (patIn) patIn.name = "custom_pattern_" + counter;
+      var head = document.createElement("div");
+      head.className = "fnd-head";
+      var offBadge = document.createElement("span");
+      offBadge.className = "fnd-off-badge";
+      offBadge.textContent = "disabled";
+      var rbtn = document.createElement("button");
+      rbtn.type = "button";
+      rbtn.className = "fnd-remove";
+      rbtn.setAttribute("data-remove-custom", String(counter));
+      rbtn.textContent = "Remove";
+      head.appendChild(oldTitle);
+      head.appendChild(offBadge);
+      head.appendChild(rbtn);
+      var chipsRow = document.createElement("div");
+      chipsRow.className = "fnd-row";
+      chipsRow.appendChild(chips);
+      var en = document.createElement("label");
+      en.className = "fnd-enable";
+      var enIn = document.createElement("input");
+      enIn.type = "checkbox";
+      enIn.name = "custom_enabled_" + counter;
+      enIn.value = "on";
+      enIn.checked = true;
+      var enLbl = document.createElement("span");
+      enLbl.className = "fnd-enable-lbl";
+      enLbl.textContent = "on";
+      en.appendChild(enIn);
+      en.appendChild(enLbl);
+      addRow.replaceChildren(en, head, chipsRow,
+        addRow.querySelector(".fnd-rem"), addRow.querySelector(".fnd-snip"));
+      // fresh empty New row at the next index
+      counter += 1;
+      var i = counter;
+      fresh.querySelector(".fnd-title").name = "custom_title_" + i;
+      fresh.querySelector(".fnd-title").value = "";
+      fresh.querySelectorAll(".sev-chip input").forEach(function(r){ r.name = "custom_sev_" + i; r.checked = r.value === "info"; });
+      var fp = fresh.querySelector("input[name^=custom_pattern_]");
+      if (fp){ fp.name = "custom_pattern_" + i; fp.value = ""; }
+      fresh.querySelector(".fnd-rem").name = "custom_rem_" + i;
+      fresh.querySelector(".fnd-rem").value = "";
+      fresh.querySelector(".fnd-snip").name = "custom_snip_" + i;
+      var fs = fresh.querySelector(".fnd-snip");
+      fs.value = "";
+      fs.addEventListener("input", function(){ window.__fitSnip(fs); });
+      window.__fitSnip(fs);
+      fresh.querySelectorAll("input[name=custom_count]").forEach(function(h){ h.value = String(i + 1); });
+      addRow.after(fresh);
+      title.placeholder = "Title";
+      return;
+    }
+    var rbtn2 = ev.target.closest ? ev.target.closest("[data-remove-custom]") : null;
+    if (rbtn2){
+      var card = rbtn2.closest(".fnd-card");
+      var t = card.querySelector(".fnd-title");
+      if (card.classList.contains("fnd-removing")) {
+        card.classList.remove("fnd-removing");
+        t.value = rbtn2.getAttribute("data-title") || "";
+        rbtn2.textContent = "Remove";
+      } else {
+        rbtn2.setAttribute("data-title", t.value);
+        t.value = "";
+        card.classList.add("fnd-removing");
+        rbtn2.textContent = "Removed — save to confirm";
+      }
+    }
+  });
+})();
+// File chooser: mirror the chosen filename into the chip (and mark it set).
+(function(){
+  var inp = document.querySelector("input[name=settings]");
+  if (inp){
+    var chip = inp.closest(".file-drop").querySelector(".file-chip");
+    var name = chip.querySelector(".file-name");
+    var DEFAULT = name.textContent;
+    inp.addEventListener("change", function(){
+      var f = inp.files && inp.files[0];
+      if (f){ chip.classList.add("has-file"); name.textContent = f.name; }
+      else  { chip.classList.remove("has-file"); name.textContent = DEFAULT; }
+    });
+  }
+})();
+</script>
+</body>
+</html>

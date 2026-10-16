@@ -1,0 +1,89 @@
+{# templates/report.html — Full FortiDoc report page #}
+{% import 'macros.html' as m -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FortiDoc — {{ hostname }}</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+{{ dynamic_css|safe }}
+</style>
+</head>
+<body>
+<div class="layout">
+
+{# ── Sidebar ── #}
+<nav class="sidebar">
+  <div style="padding:0 1rem 1rem">
+    <div style="font-size:13px;font-weight:600;color:var(--accent);font-family:var(--mono);display:flex;align-items:center;gap:8px">
+      FortiDoc
+    </div>
+    {% if meta.client -%}
+    <div style="font-size:10px;color:var(--dim);margin-top:2px">{{ meta.client }}</div>
+    {% endif -%}
+  </div>
+
+  {# Search #}
+  <div style="padding:0 1rem .75rem">
+    <div style="display:flex;gap:4px">
+      <input id="searchInput" type="text" placeholder="Search…" oninput="searchReport()"
+        style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--text);outline:none;font-family:var(--sans)">
+    </div>
+    <div id="searchCount" style="font-size:9px;color:var(--dim);margin-top:3px">0 matches</div>
+  </div>
+
+  <ul class="nav-list">
+    {% for group in nav_groups -%}
+    {{ m.nav_group(group.icon, group.title, group.links) }}
+    {% endfor -%}
+  </ul>
+</nav>
+
+{# ── Header ── #}
+<header class="site-header">
+  <div class="header-brand">
+    FortiDoc
+  </div>
+  <div class="header-meta">{{ hostname }}</div>
+</header>
+
+{# ── Main Content ── #}
+<main class="main">
+
+  {# Report header #}
+  <div class="report-header">
+    <div>
+      <div class="report-title">{{ hostname }}</div>
+      <div class="report-subtitle">{{ subtitle }}</div>
+    </div>
+    <div class="report-meta-grid">
+      {% if prepared_by -%}
+      <div class="report-meta-item">Prepared by: <strong style="color:var(--accent)">{{ prepared_by }}</strong></div>
+      {% endif -%}
+      <div class="report-meta-item">Generated: <strong>{{ gen_ts }}</strong></div>
+    </div>
+  </div>
+
+  {# All sections — pass pre-rendered HTML from Python renderers #}
+  {% for section in sections -%}
+  {{ section.html|safe }}
+  {% endfor -%}
+
+  {# Footer #}
+  <div class="footer">
+    FortiDoc · Generated {{ gen_ts }} · <a href="https://github.com/admin/fortigate-config-web" style="color:var(--dim)">open-source</a>
+  </div>
+</main>
+
+</div>
+
+{# Usage-tracking floating close button #}
+<div id="usage-close-btn">
+  <span class="usage-name"></span> <span class="usage-close-x">✕</span>
+</div>
+
+<script>{{ dynamic_js|safe }}</script>
+</body>
+</html>

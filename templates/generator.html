@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FortiDoc — Report Generator</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+:root{--bg:#0b0f17;--surface:#111827;--border:#1e293b;--text:#e2e8f0;
+--muted:#94a3b8;--dim:#64748b;--accent:#D97706;--accent2:#F2A65A;--amber:#FBBF24;
+--green:#34D399;--red:#F87171;
+--gradient:linear-gradient(135deg,#D97706,#B45309);
+--mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,'Liberation Mono',Menlo,monospace;
+--sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;
+display:grid;grid-template-rows:auto 1fr auto;position:relative;overflow-x:hidden}
+body::before{content:"";position:absolute;left:50%;top:-220px;width:900px;height:520px;
+transform:translateX(-50%);pointer-events:none;
+background:radial-gradient(ellipse at center,rgba(217,119,6,.16) 0%,rgba(217,119,6,0) 70%);
+filter:blur(40px);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateX(-50%) scale(1);opacity:.75}
+50%{transform:translateX(-50%) scale(1.12);opacity:1}}
+
+/* ---- nav ---- */
+.brand-bar{position:relative;padding:0 48px;height:64px;display:flex;align-items:center;
+justify-content:center;background:linear-gradient(180deg,#131B2C,#0D1420);
+border-bottom:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.brand-bar::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+background:linear-gradient(90deg,transparent,rgba(217,119,6,.7) 25%,rgba(217,119,6,.7) 75%,transparent)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:#141B2A;
+border:1px solid rgba(217,119,6,.35);display:flex;align-items:center;justify-content:center}
+.brand-mark svg{width:16px;height:16px;fill:var(--accent2)}
+.brand-word{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.brand-back{position:absolute;left:48px;top:50%;transform:translateY(-50%);
+display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent2);
+text-decoration:none;padding:7px 16px;border:1px solid rgba(217,119,6,.35);border-radius:999px;
+background:rgba(217,119,6,.07);transition:all .2s}
+.brand-back:hover{background:rgba(217,119,6,.15)}
+.brand-back svg{width:12px;height:12px;fill:var(--accent2)}
+
+/* ---- panel ---- */
+.panel{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
+.panel-inner{max-width:600px;width:100%}
+.panel-head{text-align:center;margin-bottom:24px}
+.panel-icon{width:56px;height:56px;border-radius:14px;background:rgba(217,119,6,.08);
+border:1px solid rgba(217,119,6,.18);display:inline-flex;align-items:center;justify-content:center;margin-bottom:18px}
+.panel-icon svg{width:24px;height:24px;fill:var(--accent2)}
+.panel-title{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;color:var(--text)}
+.panel-sub{font-size:14px;color:var(--muted);line-height:1.6}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+.drop-zone{border:2px dashed rgba(217,119,6,.4);border-radius:12px;padding:32px 20px;text-align:center;
+cursor:pointer;transition:all .25s;margin-bottom:16px;display:flex;flex-direction:column;
+align-items:center;justify-content:center;min-height:170px;background:var(--bg)}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--accent);background:rgba(217,119,6,.05)}
+.drop-zone-icon{width:52px;height:52px;border-radius:13px;background:rgba(217,119,6,.08);
+display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.drop-zone-icon svg{width:22px;height:22px;fill:var(--accent2)}
+.drop-zone-text{font-size:14px;color:var(--muted);line-height:1.7}
+.drop-zone-text strong{color:var(--text);font-weight:600}
+.drop-zone-hint{font-size:11px;color:var(--dim);margin-top:10px;letter-spacing:.3px}
+.ftag{font-family:var(--mono);font-size:12px;color:var(--accent2)}
+input[type=file]{display:none}
+
+.btn{display:block;width:100%;padding:13px 20px;border:none;border-radius:10px;font-size:14px;
+font-weight:700;cursor:pointer;transition:all .2s;font-family:var(--sans)}
+.btn-primary{background:var(--gradient);color:#fff;box-shadow:0 3px 14px rgba(217,119,6,.25)}
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.06)}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;transform:none;filter:none}
+
+.file-info{display:none;width:100%}
+.file-info.show{display:flex;align-items:center;gap:10px;padding:10px 14px;
+background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.3);border-radius:9px;font-size:12px}
+.file-info-icon svg{width:14px;height:14px;fill:var(--accent2);display:block}
+.file-info-name{flex:1;color:var(--text);font-family:var(--mono);font-size:11px;word-break:break-all;line-height:1.4}
+.file-info-remove{cursor:pointer;color:var(--dim);font-size:13px;padding:2px 4px}
+.file-info-remove:hover{color:var(--red)}
+
+.spinner{display:none;text-align:center;padding:14px 0 2px}
+.spinner.show{display:block}
+.spinner-ring{display:inline-block;width:24px;height:24px;border:2px solid var(--border);
+border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-text{color:var(--muted);font-size:12px;margin-top:8px}
+
+.error-box{display:none;margin-bottom:14px;padding:12px 14px;background:#2d1515;
+border:1px solid rgba(248,113,113,.5);border-radius:9px;font-size:12px;color:#fca5a5;line-height:1.6}
+.error-box.show{display:block}
+
+.card-help{margin-top:18px;padding-top:18px;border-top:1px solid var(--border);font-size:12px;
+color:var(--muted);line-height:1.8;text-align:center}
+.card-help strong{color:var(--text)}
+.hpath{font-family:var(--mono);font-size:11px;color:var(--accent2)}
+
+.enc-note{display:flex;align-items:center;gap:10px;margin-top:16px;padding:8px 14px;
+background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);border-radius:9px;
+font-size:11px;color:var(--muted);line-height:1.5}
+.enc-note svg{width:13px;height:13px;fill:var(--amber);flex-shrink:0}
+.enc-note b{color:var(--amber);font-weight:600}
+
+/* ---- footer ---- */
+.footer-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 24px;font-size:11px;color:var(--dim);
+background:#0D1420;border-top:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.footer-links{display:flex;align-items:center;gap:16px}
+.footer-links a{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--accent2)}
+.footer-links svg{width:11px;height:11px;fill:currentColor}
+
+@media(max-width:640px){.brand-bar{padding:0 20px}.brand-back{left:20px;padding:6px 12px}
+.panel{padding:32px 16px}.card{padding:20px}}
+</style>
+</head>
+<body>
+
+<header class="brand-bar">
+  <a href="/" class="brand-back">
+    <svg viewBox="0 0 448 512"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
+    Back
+  </a>
+  <a class="brand" href="/">
+    <span class="brand-mark">
+      <svg viewBox="0 0 384 512"><path d="M153.6 29.9l16-21.3C173.6 3.2 180 0 186.7 0C198.4 0 208 9.6 208 21.3V43.5c0 13.1 5.4 25.7 14.9 34.7L307.6 159C356.4 205.6 384 270.2 384 337.7C384 434 306 512 209.7 512H192C86 512 0 426 0 320v-3.8c0-48.8 19.4-95.6 53.9-130.1l3.5-3.5c4.2-4.2 10-6.6 16-6.6C85.9 176 96 186.1 96 198.6V288c0 35.3 28.7 64 64 64s64-28.7 64-64v-3.9c0-18-7.2-35.3-19.9-48l-38.6-38.6c-24-24-37.5-56.7-37.5-90.7c0-27.7 9-54.8 25.6-76.9z"/></svg>
+    </span>
+    <span class="brand-word">FortiDoc</span>
+  </a>
+</header>
+
+<main class="panel">
+  <div class="panel-inner">
+    <div class="panel-head">
+      <div class="panel-icon">
+        <svg viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM112 256H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16zm0 64H272c8.8 0 16 7.2 16 16s-7.2 16-16 16H112c-8.8 0-16-7.2-16-16s7.2-16 16-16z"/></svg>
+      </div>
+      <div class="panel-title">Report Generator</div>
+      <div class="panel-sub">Drop your FortiGate config — get a complete, interactive<br>HTML audit report in seconds.</div>
+    </div>
+
+    <div class="card">
+      <div id="reportError" class="error-box"></div>
+      <div class="drop-zone" id="dropReport" onclick="document.getElementById('reportFile').click()">
+        <span class="drop-zone-icon">
+          <svg viewBox="0 0 384 512"><path d="M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V160H256c-17.7 0-32-14.3-32-32V0H64zM256 0V128H384L256 0zM216 408c0 13.3-10.7 24-24 24s-24-10.7-24-24V305.9l-31 31c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l72-72c9.4-9.4 24.6-9.4 33.9 0l72 72c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-31-31V408z"/></svg>
+        </span>
+        <div class="drop-zone-text">
+          <strong>Click to select</strong> or drag &amp; drop<br>your <span class="ftag">.conf</span> or <span class="ftag">.yaml</span> file here
+        </div>
+        <div class="drop-zone-hint">FortiGate .conf or YAML export</div>
+        <input type="file" id="reportFile" accept=".conf,.yaml,.yml">
+        <div id="reportInfo" class="file-info">
+          <span class="file-info-icon">
+            <svg viewBox="0 0 384 512"><path d="M320 464c8.8 0 16-7.2 16-16V160H256c-17.7 0-32-14.3-32-32V48H64c-8.8 0-16 7.2-16 16V448c0 8.8 7.2 16 16 16H320zM0 64C0 28.7 28.7 0 64 0H229.5c17 0 33.3 6.7 45.3 18.7l90.5 90.5c12 12 18.7 28.3 18.7 45.3V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64z"/></svg>
+          </span>
+          <span class="file-info-name" id="reportName"></span>
+          <span class="file-info-remove" onclick="clearReport()">✕</span>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="reportBtn" disabled onclick="uploadReport()">Generate Report</button>
+      <div class="spinner" id="reportSpinner"><div class="spinner-ring"></div><div class="spinner-text">Analyzing config &amp; building report…</div></div>
+      <div class="card-help">
+        <strong>Export</strong> from your FortiGate web GUI: <span class="hpath">System → Backup → Config file</span>
+      </div>
+      <div class="enc-note">
+        <svg viewBox="0 0 512 512"><path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480H40c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24V296c0 13.3 10.7 24 24 24s24-10.7 24-24V184c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></svg>
+        <span><b>Encrypted backups not supported</b> (7.4.4+ / CVE-2024-21754) — export without "Encrypt backup".</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer-bar">© 2026 FortiDoc — All Rights Reserved
+  <span class="footer-links">
+    <a href="/docs">
+      <svg viewBox="0 0 448 512"><path d="M448 96c0-35.3-28.7-64-64-64H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96zM128 320c-17.7 0-32-14.3-32-32s14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128zM96 160c0-17.7 14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128c-17.7 0-32-14.3-32-32zM128 256c-17.7 0-32-14.3-32-32s14.3-32 32-32H256c17.7 0 32 14.3 32 32s-14.3 32-32 32H128z"/></svg>
+      API Docs
+    </a>
+  </span>
+</footer>
+
+<script>
+// Esc goes back to the landing page (unless you're typing in a field)
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Escape') return;
+  var t = (document.activeElement && document.activeElement.tagName) || '';
+  if (t === 'TEXTAREA' || (t === 'INPUT' && /text|search/.test(document.activeElement.type))) return;
+  location.href = '/';
+});
+</script>
+<script>
+let reportFile=null;
+const ri=document.getElementById('reportFile'),rb=document.getElementById('reportBtn'),rs=document.getElementById('reportSpinner');
+const dr=document.getElementById('dropReport');
+dr.addEventListener('dragover',function(e){e.preventDefault();dr.classList.add('dragover')});
+dr.addEventListener('dragleave',function(){dr.classList.remove('dragover')});
+dr.addEventListener('drop',function(e){e.preventDefault();dr.classList.remove('dragover');var f=e.dataTransfer.files[0];if(!f||!/\.(conf|yml|yaml)$/i.test(f.name)){err('report','Only .conf or .yaml files accepted.');return}ri.files=e.dataTransfer.files;updR(f)});
+ri.addEventListener('change',function(){if(ri.files.length)updR(ri.files[0])});
+function updR(f){reportFile=f;document.getElementById('reportName').textContent=f.name;document.getElementById('reportInfo').classList.add('show');var dz=document.getElementById('dropReport');dz.querySelector('.drop-zone-icon').style.display='none';dz.querySelector('.drop-zone-text').style.display='none';dz.querySelector('.drop-zone-hint').style.display='none';rb.disabled=false;herr('report')}
+function clearReport(){reportFile=null;ri.value='';document.getElementById('reportInfo').classList.remove('show');var dz=document.getElementById('dropReport');dz.querySelector('.drop-zone-icon').style.display='';dz.querySelector('.drop-zone-text').style.display='';dz.querySelector('.drop-zone-hint').style.display='';rb.disabled=true}
+function uploadReport(){if(!reportFile)return;rb.disabled=true;rs.classList.add('show');herr('report');var fd=new FormData();fd.append('config',reportFile);fetch('/upload',{method:'POST',body:fd}).then(async function(r){if(!r.ok){var e=await r.json().catch(function(){});throw{message:(e&&e.error)||'HTTP '+r.status}}var b=await r.blob();var u=URL.createObjectURL(b);var base=reportFile.name.replace(/\.(conf|yml|yaml)$/i,'').replace(/\.(conf|yml|yaml)$/i,'');var a=document.createElement('a');a.href=u;a.download=base+'_report.html';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);setTimeout(function(){rs.classList.remove('show');clearReport()},500)}).catch(function(e){rs.classList.remove('show');rb.disabled=false;err('report','<strong>Report failed</strong><br>'+he(e.message||String(e)))})}
+
+function err(p,m){document.getElementById(p==='report'?'reportError':'diffError').innerHTML=m;document.getElementById(p==='report'?'reportError':'diffError').classList.add('show')}
+function herr(p){document.getElementById(p==='report'?'reportError':'diffError').classList.remove('show')}
+function he(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+</script>
+</body>
+</html>

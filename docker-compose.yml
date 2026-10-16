@@ -1,0 +1,45 @@
+# FortiDoc — docker compose
+#
+# All env vars are optional. With none set the app runs open on :8080 with
+# admin login and the API disabled.
+name: fortidoc
+
+services:
+  web:
+    build: .
+    image: fortidoc
+    container_name: fortidoc
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
+      # /admin UI password (empty = admin login disabled)
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      # API key for /api/v1/* (empty = API returns 503)
+      - API_KEY=${API_KEY:-}
+      # Flask session key (set in production; a dev fallback is used if empty)
+      - SECRET_KEY=${SECRET_KEY:-}
+      # Settings file lives on the named volume → survives container recreates
+      # and is shared by all gunicorn workers.
+      - SETTINGS_PATH=/app/settings/settings.json
+      # Optional OIDC/SSO for the /admin UI. Stays password-only until
+      # OIDC_ENABLED=1 and OIDC_CLIENT_ID are both set (see README).
+      - OIDC_ENABLED=${OIDC_ENABLED:-}
+      - OIDC_ISSUER=${OIDC_ISSUER:-}
+      - OIDC_CLIENT_ID=${OIDC_CLIENT_ID:-}
+      - OIDC_CLIENT_SECRET=${OIDC_CLIENT_SECRET:-}
+      - OIDC_PUBLIC_BASE=${OIDC_PUBLIC_BASE:-}
+      - OIDC_ADMIN_EMAILS=${OIDC_ADMIN_EMAILS:-}
+    volumes:
+      - fortidoc-settings:/app/settings
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+
+volumes:
+  fortidoc-settings:

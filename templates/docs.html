@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>FortiDoc — API Docs</title>
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+<style>
+:root{--bg:#0b0f17;--surface:#111827;--border:#1e293b;--text:#e2e8f0;
+--muted:#94a3b8;--dim:#64748b;--accent:#D97706;--accent2:#F2A65A;
+--green:#34D399;--red:#F87171;--amber:#FBBF24;
+--gradient:linear-gradient(135deg,#D97706,#B45309);
+--mono:ui-monospace,'SF Mono','Cascadia Code',Consolas,'Liberation Mono',Menlo,monospace;
+--sans:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;
+display:grid;grid-template-rows:auto 1fr auto;position:relative;overflow-x:hidden}
+body::before{content:"";position:absolute;left:50%;top:-220px;width:900px;height:520px;
+transform:translateX(-50%);pointer-events:none;
+background:radial-gradient(ellipse at center,rgba(217,119,6,.16) 0%,rgba(217,119,6,0) 70%);
+filter:blur(40px);animation:breathe 6s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateX(-50%) scale(1);opacity:.75}
+50%{transform:translateX(-50%) scale(1.12);opacity:1}}
+
+/* ---- nav ---- */
+.brand-bar{position:relative;padding:0 48px;height:64px;display:flex;align-items:center;
+justify-content:center;background:linear-gradient(180deg,#131B2C,#0D1420);
+border-bottom:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.brand-bar::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;
+background:linear-gradient(90deg,transparent,rgba(217,119,6,.7) 25%,rgba(217,119,6,.7) 75%,transparent)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand-mark{width:32px;height:32px;border-radius:9px;background:#141B2A;
+border:1px solid rgba(217,119,6,.35);display:flex;align-items:center;justify-content:center}
+.brand-mark svg{width:16px;height:16px;fill:var(--accent2)}
+.brand-word{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.brand-back{position:absolute;left:48px;top:50%;transform:translateY(-50%);
+display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--accent2);
+text-decoration:none;padding:7px 16px;border:1px solid rgba(217,119,6,.35);border-radius:999px;
+background:rgba(217,119,6,.07);transition:all .2s}
+.brand-back:hover{background:rgba(217,119,6,.15)}
+.brand-back svg{width:12px;height:12px;fill:var(--accent2)}
+.nav-links{position:absolute;right:48px;top:50%;transform:translateY(-50%);
+display:flex;align-items:center;gap:12px}
+.pill{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;
+color:var(--accent2);text-decoration:none;padding:7px 16px;
+border:1px solid rgba(217,119,6,.35);border-radius:999px;
+background:rgba(217,119,6,.07);transition:all .2s}
+.pill:hover{background:rgba(217,119,6,.15)}
+.pill svg{width:12px;height:12px;fill:var(--accent2)}
+.pill-plain{color:var(--muted);border-color:var(--border);background:var(--surface)}
+.pill-plain:hover{color:var(--accent2)}
+.pill-plain svg{fill:var(--muted)}
+
+/* ---- content ---- */
+.docs{max-width:920px;margin:0 auto;padding:40px 24px 64px;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+.card-title{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.card-sub{font-size:12px;color:var(--muted);margin-top:4px}
+h2{font-size:13px;font-weight:800;letter-spacing:2px;color:var(--accent2);text-transform:uppercase}
+p{font-size:13px;color:var(--muted);line-height:1.65}
+p b,li b{color:var(--text);font-weight:600}
+code{font-family:var(--mono);font-size:12px;color:var(--text);background:var(--bg);
+border:1px solid var(--border);border-radius:5px;padding:1px 6px}
+ul{margin:8px 0 0 18px;font-size:13px;color:var(--muted);line-height:1.8}
+ul b{color:var(--text)}
+
+/* endpoint table */
+.ep{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px}
+.ep th{text-align:left;font-size:10px;letter-spacing:1.5px;color:var(--dim);
+padding:8px 12px;border-bottom:1px solid var(--border)}
+.ep td{padding:11px 12px;border-bottom:1px solid rgba(30,41,59,.6);vertical-align:top}
+.ep tr:last-child td{border-bottom:none}
+.m{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;white-space:nowrap}
+.m.post{color:#0b0f17;background:var(--accent)}
+.m.get{color:#0b0f17;background:var(--green)}
+path{font-family:var(--mono);font-size:12px;color:var(--text)}
+td.desc{color:var(--muted);font-size:12px;line-height:1.55}
+
+/* code block */
+.code{position:relative;margin-top:14px}
+.code pre{background:var(--bg);border:1px solid var(--border);border-radius:10px;
+padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:11.5px;
+line-height:1.7;color:var(--text)}
+.code pre .c{color:var(--dim)}
+.code pre .k{color:var(--accent2)}
+.code .copy{position:absolute;top:10px;right:10px;font-size:10px;font-weight:700;
+color:var(--muted);background:var(--surface);border:1px solid var(--border);
+border-radius:6px;padding:4px 10px;cursor:pointer;transition:all .15s;font-family:var(--sans)}
+.code .copy:hover{color:var(--accent2);border-color:rgba(217,119,6,.4)}
+
+/* json fields */
+.fields{margin-top:14px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.field{display:grid;grid-template-columns:220px 90px 1fr;gap:12px;padding:9px 14px;
+font-size:12px;border-bottom:1px solid rgba(30,41,59,.6);align-items:baseline}
+.field:last-child{border-bottom:none}
+.field:nth-child(odd){background:rgba(11,15,23,.5)}
+.field .n{font-family:var(--mono);font-size:11.5px;color:var(--text)}
+.field .t{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+.field .d{font-size:11.5px;color:var(--muted);line-height:1.5}
+
+/* status chips */
+.statuses{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.st{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);
+background:var(--bg);border:1px solid var(--border);border-radius:999px;padding:6px 12px}
+.st b{font-family:var(--mono);font-size:11px;color:var(--text)}
+.st .dot{width:7px;height:7px;border-radius:50%}
+
+/* footer */
+.footer-bar{display:flex;align-items:center;justify-content:center;gap:16px;
+padding:12px 24px;margin-top:48px;font-size:11px;
+color:var(--dim);background:#0D1420;border-top:1px solid transparent;
+border-image:linear-gradient(90deg,rgba(217,119,6,.35),#1E293B 30%,rgba(30,41,59,0)) 1}
+.footer-links{display:flex;align-items:center;gap:16px}
+.footer-links a{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+font-weight:600;color:var(--muted);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--accent2)}
+.footer-links svg{width:11px;height:11px;fill:currentColor}
+
+@media(max-width:760px){
+.brand-bar{padding:0 20px}
+.brand-back{left:20px}
+.nav-links{display:none}
+.field{grid-template-columns:1fr}
+.field .t{display:none}
+}
+</style>
+</head>
+<body>
+
+<header class="brand-bar">
+  <a href="/" class="brand-back">
+    <svg viewBox="0 0 448 512"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5-12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
+    Back
+  </a>
+  <a class="brand" href="/">
+    <span class="brand-mark">
+      <svg viewBox="0 0 384 512"><path d="M153.6 29.9l16-21.3C173.6 3.2 180 0 186.7 0C198.4 0 208 9.6 208 21.3V43.5c0 13.1 5.4 25.7 14.9 34.7L307.6 159C356.4 205.6 384 270.2 384 337.7C384 434 306 512 209.7 512H192C86 512 0 426 0 320v-3.8c0-48.8 19.4-95.6 53.9-130.1l3.5-3.5c4.2-4.2 10-6.6 16-6.6C85.9 176 96 186.1 96 198.6V288c0 35.3 28.7 64 64 64s64-28.7 64-64v-3.9c0-18-7.2-35.3-19.9-48l-38.6-38.6c-24-24-37.5-56.7-37.5-90.7c0-27.7 9-54.8 25.6-76.9z"/></svg>
+    </span>
+    <span class="brand-word">FortiDoc — API Docs</span>
+  </a>
+  <nav class="nav-links">
+    <a href="/" class="pill pill-plain">
+      <svg viewBox="0 0 448 512"><path d="M448 96c0-35.3-28.7-64-64-64H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96zM128 320c-17.7 0-32-14.3-32-32s14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128zM96 160c0-17.7 14.3-32 32-32H320c17.7 0 32 14.3 32 32s-14.3 32-32 32H128c-17.7 0-32-14.3-32-32zM128 256c-17.7 0-32-14.3-32-32s14.3-32 32-32H256c17.7 0 32 14.3 32 32s-14.3 32-32 32H128z"/></svg>
+      Docs
+    </a>
+    <a href="/admin" class="pill">
+      <svg viewBox="0 0 512 512"><path d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3z"/></svg>
+      Admin
+    </a>
+  </nav>
+</header>
+
+<main class="docs">
+
+  <div class="card">
+    <div class="card-title">Automation API</div>
+    <div class="card-sub">Everything FireDoc exposes to scripts — three endpoints under <code>/api/v1</code>, plus the health probe.</div>
+    <p style="margin-top:12px">The API mirrors the two web tools: upload a FortiGate config, get back the <b>HTML report as a file</b> (what you'd download from the web UI). Nothing is stored — every request is parsed in memory.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Authentication</div>
+    <div class="card-sub">All <code>/api/v1/*</code> endpoints require an API key.</div>
+    <ul style="margin-top:12px">
+      <li><b><code>X-API-Key</code> header</b> — set to the key configured in the <code>API_KEY</code> environment variable of the container. The health probe (<code>/api/v1/health</code>) is the only exception: it works without a key and reports whether a key is even configured.</li>
+      <li><b>Key missing server-side</b> → every <code>/api/v1</code> call returns <b>503</b> <code>{"error": "API not configured"}</code>.</li>
+      <li><b>Key wrong or absent in the request</b> → <b>401</b> <code>{"error": "Invalid or missing API key"}</code>.</li>
+    </ul>
+    <div class="code">
+      <button class="copy" onclick="copyBlock(this)">Copy</button>
+      <pre><span class="k">curl</span> -s http://fortidoc:8080/api/v1/health</pre>
+    </div>
+    <div class="code">
+      <button class="copy" onclick="copyBlock(this)">Copy</button>
+      <pre>{
+  <span class="k">"status"</span>: "ok",
+  <span class="k">"version"</span>: "2.0.0",
+  <span class="k">"api_configured"</span>: true
+}</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Endpoints</div>
+    <table class="ep">
+      <tr><th>Method</th><th>Path</th><th>Returns</th><th>What it does</th></tr>
+      <tr>
+        <td><span class="m get">GET</span></td>
+        <td><path>/api/v1/health</path></td>
+        <td class="desc">JSON</td>
+        <td class="desc">Liveness + config probe. No key needed — <code>api_configured</code> tells you whether the API key is set server-side.</td>
+      </tr>
+      <tr>
+        <td><span class="m post">POST</span></td>
+        <td><path>/api/v1/report</path></td>
+        <td class="desc">HTML file</td>
+        <td class="desc">Full audit report, downloaded as <code>&lt;hostname&gt;_report_&lt;YYYY-MM&gt;.html</code> (self-contained, works offline). Same content the web UI produces.</td>
+      </tr>
+      <tr>
+        <td><span class="m post">POST</span></td>
+        <td><path>/api/v1/diff</path></td>
+        <td class="desc">HTML file</td>
+        <td class="desc">Config diff between two uploads, downloaded as <code>&lt;hostname_a&gt;_diff_&lt;YYYY-MM&gt;.html</code>.</td>
+      </tr>
+      <tr>
+        <td><span class="m post">POST</span></td>
+        <td><path>/api/v1/diff/summary</path></td>
+        <td class="desc">JSON</td>
+        <td class="desc">Machine-readable twin of the diff — per-section change counts and the overall summary.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Report — <span style="font-weight:600;color:var(--muted)">POST /api/v1/report</span></div>
+    <div class="card-sub">One FortiGate export in, a downloadable HTML report out.</div>
+    <ul style="margin-top:12px">
+      <li><b>Content type</b> — <code>multipart/form-data</code>, field name <b><code>config</code></b>.</li>
+      <li><b>Accepted files</b> — <code>.conf</code> (native FortiGate export) and <code>.yaml</code> / <code>.yml</code> (converted to <code>conf</code> internally). Encrypted backups are rejected.</li>
+      <li><b>Success</b> — <b>200</b> with the full HTML document, <code>Content-Disposition: attachment</code>.</li>
+    </ul>
+    <div class="code">
+      <button class="copy" onclick="copyBlock(this)">Copy</button>
+      <pre><span class="c"># HTML report (opens in a browser, self-contained)</span>
+<span class="c"># @ before the path = upload the file — without the @, curl sends the path as a string and the API answers 400 "No file selected"</span>
+<span class="k">curl</span> -X POST http://fortidoc:8080/api/v1/report \
+     -H <span class="k">"X-API-Key: $FORDOC_KEY"</span> \
+     -F <span class="k">"config=@/path/to/fortigate.conf"</span> \
+     --output report.html</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Diff — <span style="font-weight:600;color:var(--muted)">POST /api/v1/diff</span></div>
+    <div class="card-sub">Two FortiGate exports in, a downloadable diff report out.</div>
+    <ul style="margin-top:12px">
+      <li><b>Content type</b> — <code>multipart/form-data</code>, <b>two</b> fields: <b><code>config_a</code></b> (before) and <b><code>config_b</code></b> (after). Both required.</li>
+      <li><b>Accepted files</b> — same as the report endpoint.</li>
+      <li><b>Success</b> — <b>200</b> with the diff report HTML, named after <code>config_a</code>'s hostname.</li>
+    </ul>
+    <div class="code">
+      <button class="copy" onclick="copyBlock(this)">Copy</button>
+      <pre><span class="c"># HTML diff report</span>
+<span class="c"># @ before each path = upload the file — without the @, curl sends the path as a string and the API answers 400</span>
+<span class="k">curl</span> -X POST http://fortidoc:8080/api/v1/diff \
+     -H <span class="k">"X-API-Key: $FORDOC_KEY"</span> \
+     -F <span class="k">"config_a=@/path/to/before.conf"</span> \
+     -F <span class="k">"config_b=@/path/to/after.conf"</span> \
+     --output diff.html
+
+<span class="c"># JSON summary instead</span>
+<span class="k">curl</span> -X POST http://fortidoc:8080/api/v1/diff/summary \
+     -H <span class="k">"X-API-Key: $FORDOC_KEY"</span> \
+     -F <span class="k">"config_a=@/path/to/before.conf"</span> \
+     -F <span class="k">"config_b=@/path/to/after.conf"</span></pre>
+    </div>
+    <div style="margin-top:20px">
+      <h2>Diff summary — JSON</h2>
+      <div class="fields">
+        <div class="field"><span class="n">type</span><span class="t">string</span><span class="d">Always <code>"diff"</code>.</span></div>
+        <div class="field"><span class="n">generated_at</span><span class="t">string</span><span class="d">UTC timestamp (ISO 8601).</span></div>
+        <div class="field"><span class="n">hostname_a / hostname_b</span><span class="t">string</span><span class="d">Hostname of the before / after config.</span></div>
+        <div class="field"><span class="n">version_a / version_b</span><span class="t">string</span><span class="d">FortiOS version of each side.</span></div>
+        <div class="field"><span class="n">summary</span><span class="t">object</span><span class="d">Overall change counts (added / removed / changed).</span></div>
+        <div class="field"><span class="n">sections</span><span class="t">array</span><span class="d">Per section: <code>id</code>, <code>title</code>, <code>count</code> of changes.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Error handling</div>
+    <div class="statuses">
+      <span class="st"><span class="dot" style="background:var(--green)"></span><b>200</b> report / diff</span>
+      <span class="st"><span class="dot" style="background:var(--amber)"></span><b>400</b> missing file, missing field, or empty upload</span>
+      <span class="st"><span class="dot" style="background:var(--amber)"></span><b>401</b> invalid or missing <code>X-API-Key</code></span>
+      <span class="st"><span class="dot" style="background:var(--amber)"></span><b>415</b> unsupported or encrypted file</span>
+      <span class="st"><span class="dot" style="background:var(--amber)"></span><b>422</b> file readable but config failed to parse</span>
+      <span class="st"><span class="dot" style="background:var(--red)"></span><b>503</b> API key not configured on the server</span>
+    </div>
+    <div class="code">
+      <button class="copy" onclick="copyBlock(this)">Copy</button>
+      <pre>{
+  <span class="k">"error"</span>: "Invalid or missing API key"
+}</pre>
+    </div>
+    <p style="margin-top:14px">All errors are JSON: <code>{"error": "&lt;message&gt;"}</code> with a matching status code. Check the health endpoint first — if <code>api_configured</code> is <code>false</code>, every other call will 503 until the key is set.</p>
+  </div>
+
+</main>
+
+<footer class="footer-bar">© 2026 FortiDoc — All Rights Reserved</footer>
+
+<script>
+function copyBlock(btn){
+  var pre = btn.parentElement.querySelector("pre");
+  navigator.clipboard.writeText(pre.innerText).then(function(){
+    btn.textContent = "Copied";
+    setTimeout(function(){ btn.textContent = "Copy"; }, 1200);
+  });
+}
+</script>
+</body>
+</html>
