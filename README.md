@@ -13,7 +13,7 @@ A few things worth knowing up front:
 ## Quick start
 
 ```bash
-git clone https://github.com/escheming/MAIN-FortiDoc.git fortidoc
+git clone https://github.com/Enrico0202/FireDoc.git
 cd fortidoc
 docker compose up -d
 ```
