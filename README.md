@@ -14,7 +14,7 @@ A few things worth knowing up front:
 
 ```bash
 git clone https://github.com/Enrico0202/FireDoc.git
-cd fortidoc
+cd FireDoc
 docker compose up -d
 ```
 
