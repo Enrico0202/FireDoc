@@ -10,6 +10,10 @@ A few things worth knowing up front:
 - Nothing is persisted. There's no database, and the only output is the HTML file you download.
 - The report is fully self-contained. CSS and JS are inlined, there are no external fonts or CDNs, and it works offline.
 
+## Demo
+
+https://firedocdemo.scheming.cloud/
+
 ## Quick start
 
 ```bash
